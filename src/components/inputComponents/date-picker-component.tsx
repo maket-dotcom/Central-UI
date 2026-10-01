@@ -1,0 +1,93 @@
+"use client";
+
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface DatePickerProps {
+  id?: string;
+  name?: string;
+  placeholder?: string;
+  ariaInvalid?: boolean;
+  className?: string;
+  errorTooltip?: string;
+  tooltip?: string;
+  date?: Date;
+  onSelect?: (date: Date | undefined) => void;
+}
+
+/**
+ * Reusable single-date picker input component wrapping shadcn Calendar and Popover.
+ */
+export function DatePickerComponent({
+  id,
+  name,
+  placeholder = "Pick a date",
+  ariaInvalid = false,
+  className,
+  errorTooltip,
+  tooltip,
+  date,
+  onSelect,
+}: DatePickerProps) {
+  const [open, setOpen] = React.useState(false);
+
+  // Trigger button for opening the date picker popover
+  const triggerButton = (
+    <Button
+      id={id}
+      name={name}
+      variant="outline"
+      className={cn(
+        "cursor-pointer w-full justify-start text-left font-normal",
+        !date && "text-muted-foreground",
+        className,
+        ariaInvalid ? "!border-destructive" : "border-input"
+      )}
+      aria-invalid={ariaInvalid}
+    >
+      <CalendarIcon className="mr-2 h-4 w-4" />
+      {date ? format(date, "PPP") : <span>{placeholder}</span>}
+    </Button>
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger render={triggerButton} />
+          }
+        />
+        {(errorTooltip || tooltip) && (
+          <TooltipContent
+            className={errorTooltip ? "bg-destructive font-semibold text-destructive-foreground" : ""}
+          >
+            <p>{errorTooltip || tooltip}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => {
+            onSelect?.(d);
+            setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}

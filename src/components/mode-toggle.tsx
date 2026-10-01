@@ -1,0 +1,41 @@
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/components/theme-provider";
+
+/**
+ * Toggle button with dropdown menu to select light, dark, or system color theme.
+ */
+export function ModeToggle() {
+  const { setTheme } = useTheme();
+
+  const triggerButton = (
+    <Button variant="outline" size="icon" className="cursor-pointer size-9">
+      <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Moon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={triggerButton} />
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer">
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
