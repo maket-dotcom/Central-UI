@@ -78,7 +78,7 @@ Central-UI/
 │   │   │   └── keyboardApiConfig.ts    # ★ Endpoints for Keyboard app's backend
 │   │   ├── centralInstance.ts          # ★ Axios instance → Central-Backend (VITE_SERVER_URL)
 │   │   ├── appInstance.ts              # ★ Axios instance → selected app's backendBaseUrl (dynamic)
-│   │   └── apiHooks.ts                # ★ useApi(config, instance) — parameterized
+│   │   └── apiClient.ts                # ★ createApiClient(config, instance) — parameterized
 │   │
 │   ├── app/
 │   │   └── appData.ts                 # Static app metadata (appName: "Central")
@@ -268,15 +268,15 @@ export interface ApiEndpoint {
 }
 ```
 
-### 4.3 Parameterized `apiHooks.ts` ★
+### 4.3 Parameterized `apiClient.ts` ★
 
-The `useApi()` hook now takes **config** and **instance** as parameters:
+The `createApiClient()` hook now takes **config** and **instance** as parameters:
 
 ```ts
 import type { ApiEndpoint } from "./config/types";
 import type { AxiosInstance } from "axios";
 
-export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
+export const createApiClient = (config: ApiEndpoint[], instance: AxiosInstance) => {
   const getEndpoint = (name: string): ApiEndpoint => {
     const endpoint = config.find((e) => e.name === name);
     if (!endpoint) throw new Error(`Endpoint "${name}" not found!`);
@@ -293,7 +293,7 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
     return url;
   };
 
-  const get = async (name: string, params?: object, headers?: object, pathParams?: Record<string, string>) => {
+  const get = async (name: string, params?: Record<string, unknown>, headers?: Record<string, unknown>, pathParams?: Record<string, string>) => {
     const endpoint = getEndpoint(name);
     const url = constructUrl(endpoint, pathParams);
     const response = await instance.get(url, { params, headers });
@@ -310,24 +310,24 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
 ```ts
 // services/appInfo.ts (Central-Backend)
-import { useApi } from "@/api/apiHooks";
+import { createApiClient } from "@/api/apiHooks";
 import { centralApiConfig } from "@/api/config/centralApiConfig";
 import centralInstance from "@/api/centralInstance";
 
 export const getApps = async () => {
-  const { data } = await useApi(centralApiConfig, centralInstance).get("getApps");
+  const { data } = await createApiClient(centralApiConfig, centralInstance).get("getApps");
   return data;
 };
 ```
 
 ```ts
 // services/keyboard/someService.ts (Keyboard app's backend)
-import { useApi } from "@/api/apiHooks";
+import { createApiClient } from "@/api/apiHooks";
 import { keyboardApiConfig } from "@/api/config/keyboardApiConfig";
 import appInstance from "@/api/appInstance";
 
 export const getThemes = async () => {
-  const { data } = await useApi(keyboardApiConfig, appInstance).get("getThemes");
+  const { data } = await createApiClient(keyboardApiConfig, appInstance).get("getThemes");
   return data;
 };
 ```
@@ -487,7 +487,7 @@ Phase B: API Layer ★ (updated)
   □ B3. Create api/config/keyboardApiConfig.ts (empty for now)
   □ B4. Create api/centralInstance.ts (axios → Central-Backend)
   □ B5. Create api/appInstance.ts (axios → dynamic backendBaseUrl)
-  □ B6. Create api/apiHooks.ts (parameterized useApi)
+  □ B6. Create api/apiClient.ts (parameterized createApiClient)
 
 Phase C: Store ★ (updated)
   □ C1. Create store/slices/AuthSlice.ts (localStorage)
@@ -547,7 +547,7 @@ Phase J: Verification
 |----------|--------|-----------|
 | **API configs** | Per-app files: `centralApiConfig.ts`, `keyboardApiConfig.ts` | Clean separation; each app's endpoints are isolated |
 | **Axios instances** | Two: `centralInstance` (static URL) + `appInstance` (dynamic URL) | Central-Backend vs app-specific backend are different servers |
-| **apiHooks** | Parameterized: `useApi(config, instance)` | Single hook logic, flexible per-caller |
+| **apiHooks** | Parameterized: `createApiClient(config, instance)` | Single hook logic, flexible per-caller |
 | **Pages** | `pages/auth/`, `pages/appSelection/` (common) + `pages/apps/keyboard/` (scoped) | Clear separation of common vs app-specific UI |
 | **Services/Queries** | Top-level for common + `keyboard/` subfolder for scoped | Scales to more apps: `services/appX/`, `query/appX/` |
 | **Store** | `store/slices/` (common) + `store/keyboard/` (scoped), all in single `useAppStore` | One global store keeps state access simple |
@@ -572,4 +572,4 @@ When you add a new app (e.g., "WallpaperApp"), you only need to:
 | 8 | `store/index.ts` — merge new slices |
 | 9 | `router.tsx` — add new app-specific route configs (e.g., `KeyboardAppRoutes`) |
 
-No changes needed to `appInstance.ts`, `apiHooks.ts`, or the layout — they work generically.
+No changes needed to `appInstance.ts`, `apiClient.ts`, or the layout — they work generically.

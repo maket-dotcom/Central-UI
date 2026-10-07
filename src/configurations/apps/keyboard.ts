@@ -1,5 +1,5 @@
-import { IconHome } from "@tabler/icons-react";
-import type { AppSidebarConfig } from "../types";
+import { IconBrandCampaignmonitor, IconHome } from "@tabler/icons-react"
+import type { AppSidebarConfig } from "../types"
 
 /**
  * Sidebar navigation configuration for the Keyboard application.
@@ -12,8 +12,13 @@ export const keyboardSidebarConfig: AppSidebarConfig = {
       url: "/keyboard/home",
       icon: IconHome,
     },
+    {
+      title: "Campaign",
+      url: "/keyboard/campaign",
+      icon: IconBrandCampaignmonitor,
+    },
     // Future keyboard features to be added here:
     // { title: "Themes", url: "/keyboard/themes", icon: IconPalette },
     // { title: "Settings", url: "/keyboard/settings", icon: IconSettings },
   ],
-};
+}

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import { NavLink, useLocation } from "react-router-dom"
 
 import {
   SidebarGroup,
@@ -11,13 +11,13 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-} from "@/components/ui/sidebar";
-import type { SidebarMenuItem as SidebarMenuItemType } from "@/configurations/types";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/sidebar"
+import type { SidebarMenuItem as SidebarMenuItemType } from "@/configurations/types"
+import { cn } from "@/lib/utils"
 
 interface NavMainProps {
   /** Array of top-level navigation items defined in app sidebar config */
-  items: SidebarMenuItemType[];
+  items: SidebarMenuItemType[]
 }
 
 /**
@@ -25,44 +25,46 @@ interface NavMainProps {
  * collapsible submenu groups with active route auto-expansion.
  */
 export function NavMain({ items = [] }: NavMainProps) {
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const location = useLocation()
+  const currentPath = location.pathname
 
   // Track single open accordion section
-  const [openTitle, setOpenTitle] = useState<string | null>(null);
+  const [openTitle, setOpenTitle] = useState<string | null>(null)
+  const [prevPath, setPrevPath] = useState(currentPath)
 
   // Auto-expand parent group if a child route is active
-  useEffect(() => {
+  if (currentPath !== prevPath) {
+    setPrevPath(currentPath)
     for (const item of items) {
       if (item.items && item.items.length > 0) {
         const isChildActive = item.items.some((sub) =>
           currentPath.startsWith(sub.url)
-        );
+        )
         if (isChildActive) {
-          setOpenTitle(item.title);
-          break;
+          setOpenTitle(item.title)
+          break
         }
       }
     }
-  }, [currentPath, items]);
+  }
 
   const toggleAccordion = (title: string) => {
-    setOpenTitle((prev) => (prev === title ? null : title));
-  };
+    setOpenTitle((prev) => (prev === title ? null : title))
+  }
 
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-1">
         <SidebarMenu>
           {items.map((item) => {
-            const hasSubItems = Boolean(item.items && item.items.length > 0);
-            const isOpen = openTitle === item.title;
+            const hasSubItems = Boolean(item.items && item.items.length > 0)
+            const isOpen = openTitle === item.title
 
             // Render collapsible submenu section
             if (hasSubItems && item.items) {
               const isGroupActive = item.items.some((sub) =>
                 currentPath.startsWith(sub.url)
-              );
+              )
 
               return (
                 <SidebarMenuItem key={item.title}>
@@ -70,30 +72,34 @@ export function NavMain({ items = [] }: NavMainProps) {
                     onClick={() => toggleAccordion(item.title)}
                     isActive={isGroupActive}
                     tooltip={item.title}
-                    className="w-full flex items-center justify-between cursor-pointer select-none"
+                    className="flex w-full cursor-pointer items-center justify-between select-none"
                   >
                     <div className="flex items-center gap-2">
                       {item.icon && <item.icon className="size-4 shrink-0" />}
-                      <span className="font-medium text-sm">{item.title}</span>
+                      <span className="text-sm font-medium">{item.title}</span>
                     </div>
                     {isOpen ? (
-                      <ChevronDown className="size-4 shrink-0 transition-transform text-muted-foreground" />
+                      <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform" />
                     ) : (
-                      <ChevronRight className="size-4 shrink-0 transition-transform text-muted-foreground" />
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform" />
                     )}
                   </SidebarMenuButton>
 
                   {isOpen && (
-                    <SidebarMenuSub className="ml-4 border-l border-border pl-2 my-1 flex flex-col gap-1">
+                    <SidebarMenuSub className="my-1 ml-4 flex flex-col gap-1 border-l border-border pl-2">
                       {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={`${item.title}-${subItem.title}-${subItem.url}`}>
+                        <SidebarMenuSubItem
+                          key={`${item.title}-${subItem.title}-${subItem.url}`}
+                        >
                           <NavLink to={subItem.url} className="w-full">
                             {({ isActive }) => (
                               <SidebarMenuSubButton
                                 isActive={isActive}
                                 className={cn(
-                                  "w-full flex items-center gap-2 py-1 px-2 rounded-md transition-colors",
-                                  isActive ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50"
+                                  "flex w-full items-center gap-2 rounded-md px-2 py-1 transition-colors",
+                                  isActive
+                                    ? "bg-accent font-medium text-accent-foreground"
+                                    : "hover:bg-accent/50"
                                 )}
                               >
                                 <span className="text-xs">{subItem.title}</span>
@@ -105,7 +111,7 @@ export function NavMain({ items = [] }: NavMainProps) {
                     </SidebarMenuSub>
                   )}
                 </SidebarMenuItem>
-              );
+              )
             }
 
             // Render single standalone navigation item
@@ -124,10 +130,10 @@ export function NavMain({ items = [] }: NavMainProps) {
                   )}
                 </NavLink>
               </SidebarMenuItem>
-            );
+            )
           })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  );
+  )
 }

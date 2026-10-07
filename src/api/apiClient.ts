@@ -1,7 +1,7 @@
 import type { ApiEndpoint } from "./config/types"
 import type { AxiosInstance, AxiosRequestConfig } from "axios"
 
-export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
+export const createApiClient = (config: ApiEndpoint[], instance: AxiosInstance) => {
   const getEndpoint = (name: string): ApiEndpoint => {
     const endpoint = config.find((e) => e.name === name)
     if (!endpoint) throw new Error(`Endpoint "${name}" not found in config!`)
@@ -23,8 +23,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const get = async (
     name: string,
-    params?: object,
-    headers?: object,
+    params?: Record<string, unknown>,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name)
@@ -38,8 +38,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const post = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name)
@@ -52,8 +52,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const patch = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name)
@@ -66,8 +66,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const put = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name)
@@ -80,7 +80,7 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const del = async (
     name: string,
-    headers?: object,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name)

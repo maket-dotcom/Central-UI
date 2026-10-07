@@ -3,13 +3,13 @@
 > **Master Plan:** [Stage 0 README](file:///d:/project/central/Central-UI/docs/stage-0/README.md)  
 > **Status:** 🟢 Completed  
 > **Prerequisite:** [Phase A](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_A.md) (Scaffolding + Environment) must be complete  
-> **Creates:** `src/api/config/types.ts`, `centralApiConfig.ts`, `keyboardApiConfig.ts`, `centralInstance.ts`, `appInstance.ts`, `apiHooks.ts`
+> **Creates:** `src/api/config/types.ts`, `centralApiConfig.ts`, `keyboardApiConfig.ts`, `centralInstance.ts`, `appInstance.ts`, `apiClient.ts`
 
 ---
 
 ## Objective
 
-Build the dual-instance API layer: one Axios instance for Central-Backend (static `VITE_SERVER_URL`) and one for the selected app's backend (dynamic `backendBaseUrl` from Zustand). Create per-app endpoint config files and a parameterized `useApi()` hook.
+Build the dual-instance API layer: one Axios instance for Central-Backend (static `VITE_SERVER_URL`) and one for the selected app's backend (dynamic `backendBaseUrl` from Zustand). Create per-app endpoint config files and a parameterized `createApiClient()` hook.
 
 ---
 
@@ -51,7 +51,7 @@ export const centralApiConfig: ApiEndpoint[] = [
 ```
 
 > [!NOTE]
-> These match the Central-Backend routes defined in `Central-Backend/src/modules/appInfo/appInfoRoutes.ts`. The `{id}` placeholders are resolved at runtime by `constructUrl()` in `apiHooks.ts`.
+> These match the Central-Backend routes defined in `Central-Backend/src/modules/appInfo/appInfoRoutes.ts`. The `{id}` placeholders are resolved at runtime by `constructUrl()` in `apiClient.ts`.
 
 **Checklist:**
 - [x] B2. Create `src/api/config/centralApiConfig.ts`
@@ -182,9 +182,9 @@ export default appInstance;
 
 ---
 
-## Task 6: Create `api/apiHooks.ts`
+## Task 6: Create `api/apiClient.ts`
 
-**File:** `src/api/apiHooks.ts`
+**File:** `src/api/apiClient.ts`
 
 Parameterized hook — caller picks which config + instance to use.
 
@@ -192,7 +192,7 @@ Parameterized hook — caller picks which config + instance to use.
 import type { ApiEndpoint } from "./config/types";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 
-export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
+export const createApiClient = (config: ApiEndpoint[], instance: AxiosInstance) => {
   const getEndpoint = (name: string): ApiEndpoint => {
     const endpoint = config.find((e) => e.name === name);
     if (!endpoint) throw new Error(`Endpoint "${name}" not found in config!`);
@@ -214,8 +214,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const get = async (
     name: string,
-    params?: object,
-    headers?: object,
+    params?: Record<string, unknown>,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name);
@@ -229,8 +229,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const post = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name);
@@ -243,8 +243,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const patch = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name);
@@ -257,8 +257,8 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const put = async (
     name: string,
-    data?: object,
-    headers?: object,
+    data?: Record<string, unknown> | FormData,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name);
@@ -271,7 +271,7 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
   const del = async (
     name: string,
-    headers?: object,
+    headers?: Record<string, unknown>,
     pathParams?: Record<string, string>
   ) => {
     const endpoint = getEndpoint(name);
@@ -290,26 +290,26 @@ export const useApi = (config: ApiEndpoint[], instance: AxiosInstance) => {
 
 ```ts
 // Central-Backend service
-import { useApi } from "@/api/apiHooks";
+import { createApiClient } from "@/api/apiHooks";
 import { centralApiConfig } from "@/api/config/centralApiConfig";
 import centralInstance from "@/api/centralInstance";
 
-const api = useApi(centralApiConfig, centralInstance);
+const api = createApiClient(centralApiConfig, centralInstance);
 const { data } = await api.get("getApps");
 ```
 
 ```ts
 // Keyboard app service
-import { useApi } from "@/api/apiHooks";
+import { createApiClient } from "@/api/apiHooks";
 import { keyboardApiConfig } from "@/api/config/keyboardApiConfig";
 import appInstance from "@/api/appInstance";
 
-const api = useApi(keyboardApiConfig, appInstance);
+const api = createApiClient(keyboardApiConfig, appInstance);
 const { data } = await api.get("getThemes");
 ```
 
 **Checklist:**
-- [x] B6. Create `src/api/apiHooks.ts` with full `get`, `post`, `patch`, `put`, `del` methods
+- [x] B6. Create `src/api/apiClient.ts` with full `get`, `post`, `patch`, `put`, `del` methods
 
 ---
 
@@ -323,7 +323,7 @@ src/api/
 │   └── keyboardApiConfig.ts  # Keyboard app endpoints (empty for now)
 ├── centralInstance.ts        # Axios → Central-Backend (VITE_SERVER_URL)
 ├── appInstance.ts            # Axios → dynamic backendBaseUrl
-└── apiHooks.ts               # useApi(config, instance) — parameterized
+└── apiClient.ts               # createApiClient(config, instance) — parameterized
 ```
 
 ---
@@ -337,7 +337,7 @@ Phase B: API Layer
   ☑ B3. Create api/config/keyboardApiConfig.ts (empty for now)
   ☑ B4. Create api/centralInstance.ts (axios → Central-Backend)
   ☑ B5. Create api/appInstance.ts (axios → dynamic backendBaseUrl)
-  ☑ B6. Create api/apiHooks.ts (parameterized useApi with get/post/patch/put/del)
+  ☑ B6. Create api/apiClient.ts (parameterized createApiClient with get/post/patch/put/del)
 ```
 
 > **Next Phase:** [Phase C+D: Store + Services & Queries](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_CD.md)

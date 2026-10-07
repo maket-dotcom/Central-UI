@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAddMedia } from "@/query/useMedia";
+import type { MediaResponse } from "@/configurations/types";
 import {
   addMediaSchema,
   type AddMediaInputs,
@@ -13,7 +14,7 @@ interface MediaUploadProps {
   /** Image or media file to upload */
   imageFile: File;
   /** Callback fired with the upload response data */
-  setResp: (resp: any) => void;
+  setResp: (resp: MediaResponse) => void;
 }
 
 /**
@@ -46,7 +47,7 @@ const MediaUpload = ({
 
     mutate(payload, {
       onSuccess: (resp) => {
-        setResp(resp?.data);
+        setResp(resp);
       },
       onError: (err) => {
         console.error("Upload failed:", err);

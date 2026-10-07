@@ -1,9 +1,9 @@
-import { useApi } from "@/api/apiHooks"
+import { createApiClient } from "@/api/apiClient"
 import { centralApiConfig } from "@/api/config/centralApiConfig"
 import centralInstance from "@/api/centralInstance"
 
 // Initialize parameterized API client configured with Central-Backend endpoints and centralInstance
-const api = useApi(centralApiConfig, centralInstance)
+const api = createApiClient(centralApiConfig, centralInstance)
 
 /**
  * Fetch all registered apps from Central-Backend.
@@ -12,7 +12,9 @@ const api = useApi(centralApiConfig, centralInstance)
  * @param params - Optional query parameters (e.g. status filter, pagination)
  * @returns Response data containing the list of apps
  */
-export const getApps = async (params?: object) => {
+export const getApps = async ({
+  params,
+}: { params?: Record<string, unknown> } = {}) => {
   const { data } = await api.get("getApps", params)
   return data
 }
@@ -24,7 +26,7 @@ export const getApps = async (params?: object) => {
  * @param id - App document ID
  * @returns Response data containing the app details
  */
-export const getAppById = async (id: string) => {
+export const getAppById = async ({ id }: { id: string }) => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.get("getAppById", undefined, undefined, { id })
   return data
@@ -37,7 +39,7 @@ export const getAppById = async (id: string) => {
  * @param body - App payload (e.g. appName, backendBaseUrl, status)
  * @returns Response data for the created app
  */
-export const addApp = async (body: object) => {
+export const addApp = async ({ body }: { body: Record<string, unknown> }) => {
   const { data } = await api.post("addApp", body)
   return data
 }
@@ -50,7 +52,13 @@ export const addApp = async (body: object) => {
  * @param body - Partial app fields to update
  * @returns Response data for the updated app
  */
-export const updateApp = async (id: string, body: object) => {
+export const updateApp = async ({
+  id,
+  body,
+}: {
+  id: string
+  body: Record<string, unknown>
+}) => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.patch("updateApp", body, undefined, { id })
   return data
@@ -63,7 +71,7 @@ export const updateApp = async (id: string, body: object) => {
  * @param id - App document ID to delete
  * @returns Response data acknowledging deletion
  */
-export const deleteApp = async (id: string) => {
+export const deleteApp = async ({ id }: { id: string }) => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.del("deleteApp", undefined, { id })
   return data

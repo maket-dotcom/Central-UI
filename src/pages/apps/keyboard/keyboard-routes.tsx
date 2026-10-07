@@ -1,4 +1,5 @@
 import { keyboardHomeConfig } from "./home/home-config"
+import CampaignConfig from "./campaign/campaign-config"
 import AppGuard from "@/routes/app-guard"
 import Layout from "@/components/layout"
 import ProtectedRoute from "@/routes/protected-route"
@@ -16,8 +17,10 @@ export const KeyboardAppRoutes = {
   children: [
     // Redirect /keyboard to /keyboard/home
     { index: true, element: <Navigate to="/keyboard/home" replace /> },
-    keyboardHomeConfig,
     // Catch-all for unknown /keyboard/* routes
     { path: "*", element: <Navigate to="/keyboard/home" replace /> },
+
+    keyboardHomeConfig,
+    CampaignConfig,
   ],
 }

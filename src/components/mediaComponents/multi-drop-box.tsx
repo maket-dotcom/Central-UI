@@ -3,14 +3,14 @@ import MediaUpload from "./media-upload";
 import Loader from "@/components/loader";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MediaType } from "@/configurations/types";
+import type { MediaType, MediaResponse } from "@/configurations/types";
 import { useDeleteMediaById } from "@/query/useMedia";
 
 interface Item {
   id: string;
   file?: File;
   previewUrl: string;
-  resp: any | null;
+  resp: MediaResponse | null;
   isUploading: boolean;
   w?: number;
   h?: number;
@@ -18,7 +18,7 @@ interface Item {
 
 interface MultiDropBoxProps {
   type: MediaType;
-  setMediaResp: (resp: any[]) => void;
+  setMediaResp: (resp: MediaResponse[]) => void;
   previousMediaLinks?: {
     id: string;
     link: string;
@@ -39,14 +39,9 @@ const MultiDropBox = ({
   aspectRatioText,
 }: MultiDropBoxProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [items, setItems] = useState<Item[]>([]);
-  const { mutate: deleteMediaMutate } = useDeleteMediaById();
-
-  // Load existing media on initial mount
-  useEffect(() => {
-    if (!previousMediaLinks.length) return;
-
-    const initialItems: Item[] = previousMediaLinks.map((m) => ({
+  const [items, setItems] = useState<Item[]>(() => {
+    if (!previousMediaLinks || previousMediaLinks.length === 0) return [];
+    return previousMediaLinks.map((m) => ({
       id: crypto.randomUUID(),
       previewUrl: m.link,
       isUploading: false,
@@ -58,9 +53,16 @@ const MultiDropBox = ({
         },
       },
     }));
+  });
 
-    setItems(initialItems);
-    setMediaResp(initialItems.map((i) => i.resp));
+  const { mutate: deleteMediaMutate } = useDeleteMediaById();
+
+  // Load existing media into parent state on initial mount
+  useEffect(() => {
+    if (items.length > 0) {
+      setMediaResp(items.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle file selection from file input
@@ -102,7 +104,7 @@ const MultiDropBox = ({
   };
 
   // Callback when an individual item's upload completes
-  const handleUploadResp = (id: string, resp: any) => {
+  const handleUploadResp = (id: string, resp: MediaResponse) => {
     setItems((prev) => {
       const updated = prev.map((i) => {
         if (i.id === id) {
@@ -115,7 +117,7 @@ const MultiDropBox = ({
         return i;
       });
 
-      setMediaResp(updated.map((i) => i.resp).filter(Boolean));
+      setMediaResp(updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
       return updated;
     });
   };
@@ -130,7 +132,7 @@ const MultiDropBox = ({
 
     setItems((prev) => {
       const updated = prev.filter((i) => i.id !== id);
-      setMediaResp(updated.map((i) => i.resp).filter(Boolean));
+      setMediaResp(updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
       return updated;
     });
   };

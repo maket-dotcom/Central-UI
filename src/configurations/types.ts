@@ -48,3 +48,19 @@ export type MediaType =
   | "product"
   | (string & {});
 
+/**
+ * Standard shape of media upload responses from the backend.
+ */
+export interface MediaResponse {
+  data?: {
+    _id?: string;
+    id?: string;
+    link1?: string;
+    link?: string;
+    type?: string;
+    w?: number;
+    h?: number;
+    [key: string]: unknown;
+  };
+}
+

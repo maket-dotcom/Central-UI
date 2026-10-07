@@ -22,15 +22,15 @@ export function SiteHeader() {
     const config = getSidebarConfig(selectedApp.appName);
     if (config) {
       for (const item of config.navMain) {
-        if (item.url === pathname) {
+        // Match exact URL or nested paths (e.g., /keyboard/campaign/list matching /keyboard/campaign)
+        if (item.url === pathname || (item.url && pathname.startsWith(item.url + "/"))) {
           currentPageTitle = item.title;
-          break;
         }
+        
         if (item.items) {
-          const match = item.items.find((sub) => sub.url === pathname);
+          const match = item.items.find((sub) => sub.url === pathname || (sub.url && pathname.startsWith(sub.url + "/")));
           if (match) {
             currentPageTitle = match.title;
-            break;
           }
         }
       }

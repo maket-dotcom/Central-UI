@@ -47,7 +47,7 @@ Bootstrap Central-UI with an **app-scoped folder architecture** — separate API
 | Phase | Title | Files Created | Status |
 |-------|-------|---------------|--------|
 | **A** | [Scaffolding + Environment](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_A.md) | Project init, npm packages, `.env`, `vite.config.ts` | 🟢 Completed |
-| **B** | [API Layer](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_B.md) | `api/config/types.ts`, `centralApiConfig.ts`, `keyboardApiConfig.ts`, `centralInstance.ts`, `appInstance.ts`, `apiHooks.ts` | 🟢 Completed |
+| **B** | [API Layer](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_B.md) | `api/config/types.ts`, `centralApiConfig.ts`, `keyboardApiConfig.ts`, `centralInstance.ts`, `appInstance.ts`, `apiClient.ts` | 🟢 Completed |
 | **C+D** | [Store + Services & Queries](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_CD.md) | `store/` (AuthSlice, AppSlice, index), `services/appInfo.ts`, `query/useAppInfo.ts`, `utils/` | 🟢 Completed |
 | **E+F** | [Configuration + Components](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_EF.md) | `configurations/`, `app/appData.ts`, shadcn components, inputComponents/, mediaComponents/, layout shell | 🟢 Completed |
 | **G+H+I** | [Pages + Routing + App Root](file:///d:/project/central/Central-UI/docs/stage-0/PHASE_GHI.md) | `pages/` (login, app-selection, keyboard home), `routes/` (router, guards), `App.tsx`, `main.tsx` | 🟢 Completed |
@@ -61,7 +61,7 @@ Bootstrap Central-UI with an **app-scoped folder architecture** — separate API
 |----------|--------|-----------|
 | **API configs** | Per-app files: `centralApiConfig.ts`, `keyboardApiConfig.ts` | Clean separation; each app's endpoints are isolated |
 | **Axios instances** | Two: `centralInstance` (static URL) + `appInstance` (dynamic URL) | Central-Backend vs app-specific backend are different servers |
-| **apiHooks** | Parameterized: `useApi(config, instance)` | Single hook logic, flexible per-caller |
+| **apiClient** | Parameterized: `createApiClient(config, instance)` | Single client logic, flexible per-caller |
 | **Pages** | `pages/auth/`, `pages/appSelection/` (common) + `pages/apps/keyboard/` (scoped) | Clear separation of common vs app-specific UI |
 | **Routing** | Modular configs: `router.tsx` (central) + `keyboard-routes.tsx` (scoped) | Safe, isolated app routing and clean central router |
 | **Services/Queries** | Top-level for common + `keyboard/` subfolder for scoped | Scales to more apps: `services/appX/`, `query/appX/` |
@@ -85,4 +85,4 @@ Bootstrap Central-UI with an **app-scoped folder architecture** — separate API
 | 8 | `store/index.ts` — merge new slices |
 | 9 | `router.tsx` — add new app-specific route configs (e.g., `KeyboardAppRoutes`) |
 
-No changes needed to `appInstance.ts`, `apiHooks.ts`, or the layout — they work generically.
+No changes needed to `appInstance.ts`, `apiClient.ts`, or the layout — they work generically.

@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom"
 import { useAppStore } from "@/store"
 import { useGetApps } from "@/query/useAppInfo"
 import { Loader2 } from "lucide-react"
+import type { SelectedApp } from "@/store/slices/AppSlice"
 
 interface AppGuardProps {
   children: React.ReactNode
@@ -21,7 +22,7 @@ export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
   const { data: appsData, isLoading } = useGetApps()
 
   // Extract application array safely from API response structure
-  const appsList: any[] = Array.isArray(appsData?.data?.data)
+  const appsList: SelectedApp[] = Array.isArray(appsData?.data?.data)
     ? appsData.data.data
     : Array.isArray(appsData?.data)
       ? appsData.data
@@ -31,7 +32,8 @@ export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
 
   // If we have API data, try to find the expected app
   const foundApp = appsList.find(
-    (a: any) => a.appName.toLowerCase() === expectedAppName.toLowerCase()
+    (a: SelectedApp) =>
+      a.appName.toLowerCase() === expectedAppName.toLowerCase()
   )
 
   // Attempt to hydrate the active app from API data if it's missing from memory

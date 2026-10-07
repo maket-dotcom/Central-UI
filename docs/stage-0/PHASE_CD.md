@@ -179,13 +179,13 @@ src/store/
 Service layer for Central-Backend's app-info endpoints. Uses `centralInstance` + `centralApiConfig`.
 
 ```ts
-import { useApi } from "@/api/apiHooks";
+import { createApiClient } from "@/api/apiHooks";
 import { centralApiConfig } from "@/api/config/centralApiConfig";
 import centralInstance from "@/api/centralInstance";
 
-const api = useApi(centralApiConfig, centralInstance);
+const api = createApiClient(centralApiConfig, centralInstance);
 
-export const getApps = async (params?: object) => {
+export const getApps = async (params?: Record<string, unknown>) => {
   const { data } = await api.get("getApps", params);
   return data;
 };
@@ -195,12 +195,12 @@ export const getAppById = async (id: string) => {
   return data;
 };
 
-export const addApp = async (body: object) => {
+export const addApp = async (body: Record<string, unknown>) => {
   const { data } = await api.post("addApp", body);
   return data;
 };
 
-export const updateApp = async (id: string, body: object) => {
+export const updateApp = async (id: string, body: Record<string, unknown>) => {
   const { data } = await api.patch("updateApp", body, undefined, { id });
   return data;
 };
@@ -242,7 +242,7 @@ React Query hooks wrapping the appInfo service functions.
 import { useQuery } from "@tanstack/react-query";
 import { getApps } from "@/services/appInfo";
 
-export const useGetApps = (params?: object) => {
+export const useGetApps = (params?: Record<string, unknown>) => {
   return useQuery({
     queryKey: ["apps", params],
     queryFn: () => getApps(params),
