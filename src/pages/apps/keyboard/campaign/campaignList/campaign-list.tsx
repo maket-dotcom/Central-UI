@@ -74,11 +74,11 @@ export default function CampaignList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger render={
                         <Button variant="ghost" size="icon">
                           <MoreVerticalIcon className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
+                      } />
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => navigate(`/keyboard/campaign/update/${campaign.id}`)}>
                           Edit
