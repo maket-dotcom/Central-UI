@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import Loader from "@/components/loader"
 import type { Campaign } from "@/utils/schemas/keyboard/campaignSchema"
 
 export default function DeleteCampaign({
@@ -17,13 +18,16 @@ export default function DeleteCampaign({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  campaign: Campaign
+  campaign: Campaign | null
 }) {
   const { mutate, isPending } = useDeleteCampaign()
 
   const handleDelete = () => {
+    const targetId = campaign?._id || campaign?.id
+    if (!targetId) return
+
     mutate(
-      { id: campaign.id },
+      { id: targetId },
       {
         onSuccess: () => {
           onOpenChange(false)
@@ -32,14 +36,16 @@ export default function DeleteCampaign({
     )
   }
 
+  if (!campaign) return null
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Campaign</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the campaign "{campaign.name}"? This
-            action cannot be undone.
+            Are you sure you want to permanently delete the campaign &ldquo;{campaign.name}&rdquo;?
+            This hard-deletes the campaign and cleans up its associated icon image from storage.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -55,7 +61,8 @@ export default function DeleteCampaign({
             onClick={handleDelete}
             disabled={isPending}
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending && <Loader />}
+            {isPending ? "Deleting..." : "Delete Campaign"}
           </Button>
         </DialogFooter>
       </DialogContent>

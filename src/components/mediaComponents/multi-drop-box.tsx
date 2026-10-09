@@ -1,35 +1,56 @@
-import { useEffect, useRef, useState } from "react";
-import MediaUpload from "./media-upload";
-import Loader from "@/components/loader";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { MediaType, MediaResponse } from "@/configurations/types";
-import { useDeleteMediaById } from "@/query/useMedia";
+import { useEffect, useRef, useState } from "react"
+import MediaUpload from "./media-upload"
+import Loader from "@/components/loader"
+import { X } from "lucide-react"
+import { cn } from "@/lib/utils"
+import type { MediaType, MediaResponse } from "@/configurations/types"
+import { getErrorMessage } from "@/utils/getErrorMessage"
+import type { MediaUploadPayload } from "./media-upload"
 
 interface Item {
-  id: string;
-  file?: File;
-  previewUrl: string;
-  resp: MediaResponse | null;
-  isUploading: boolean;
-  w?: number;
-  h?: number;
+  id: string
+  file?: File
+  previewUrl: string
+  resp: MediaResponse | null
+  isUploading: boolean
+  error?: string
+  w?: number
+  h?: number
 }
 
 interface MultiDropBoxProps {
-  type: MediaType;
-  setMediaResp: (resp: MediaResponse[]) => void;
+  type: MediaType
+  setMediaResp: (resp: MediaResponse[]) => void
   previousMediaLinks?: {
-    id: string;
-    link: string;
-    type: string;
-  }[];
-  errorTooltip?: string;
-  aspectRatioText?: string;
+    id: string
+    link: string
+    type: string
+  }[]
+  errorTooltip?: string
+  aspectRatioText?: string
+  /** Optional mutation function to trigger file upload */
+  uploadMutate?: (
+    payload: MediaUploadPayload,
+    options?: {
+      onSuccess?: (resp: MediaResponse) => void
+      onError?: (err: unknown) => void
+    }
+  ) => void
+  /** Optional mutation function to clean up / delete media by ID */
+  deleteMutate?: (
+    payload: { id: string },
+    options?: {
+      onSuccess?: (resp: unknown) => void
+      onError?: (err: unknown) => void
+    }
+  ) => void
+  /** Optional validation function */
+  validateFile?: (file: File) => { success: boolean; error?: string }
 }
 
 /**
  * Multi-file drag-and-drop upload zone supporting concurrent uploads, image previews, and individual removals.
+ * Decoupled from app-specific queries.
  */
 const MultiDropBox = ({
   type,
@@ -37,10 +58,13 @@ const MultiDropBox = ({
   previousMediaLinks = [],
   errorTooltip = "",
   aspectRatioText,
+  uploadMutate,
+  deleteMutate,
+  validateFile,
 }: MultiDropBoxProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<Item[]>(() => {
-    if (!previousMediaLinks || previousMediaLinks.length === 0) return [];
+    if (!previousMediaLinks || previousMediaLinks.length === 0) return []
     return previousMediaLinks.map((m) => ({
       id: crypto.randomUUID(),
       previewUrl: m.link,
@@ -52,28 +76,26 @@ const MultiDropBox = ({
           type: m.type,
         },
       },
-    }));
-  });
-
-  const { mutate: deleteMediaMutate } = useDeleteMediaById();
+    }))
+  })
 
   // Load existing media into parent state on initial mount
   useEffect(() => {
     if (items.length > 0) {
-      setMediaResp(items.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
+      setMediaResp(items.map((i) => i.resp).filter(Boolean) as MediaResponse[])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   // Handle file selection from file input
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
 
     files.forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      const img = new Image();
-      img.src = previewUrl;
+      const previewUrl = URL.createObjectURL(file)
+      const img = new Image()
+      img.src = previewUrl
       img.onload = () => {
         const item: Item = {
           id: crypto.randomUUID(),
@@ -83,9 +105,9 @@ const MultiDropBox = ({
           isUploading: true,
           w: img.naturalWidth,
           h: img.naturalHeight,
-        };
-        setItems((prev) => [...prev, item]);
-      };
+        }
+        setItems((prev) => [...prev, item])
+      }
       img.onerror = () => {
         const item: Item = {
           id: crypto.randomUUID(),
@@ -95,13 +117,13 @@ const MultiDropBox = ({
           isUploading: true,
           w: 0,
           h: 0,
-        };
-        setItems((prev) => [...prev, item]);
-      };
-    });
+        }
+        setItems((prev) => [...prev, item])
+      }
+    })
 
-    e.target.value = "";
-  };
+    e.target.value = ""
+  }
 
   // Callback when an individual item's upload completes
   const handleUploadResp = (id: string, resp: MediaResponse) => {
@@ -109,33 +131,48 @@ const MultiDropBox = ({
       const updated = prev.map((i) => {
         if (i.id === id) {
           if (resp && resp.data) {
-            resp.data.w = i.w || 0;
-            resp.data.h = i.h || 0;
+            resp.data.w = i.w || 0
+            resp.data.h = i.h || 0
           }
-          return { ...i, resp, isUploading: false };
+          return { ...i, resp, isUploading: false, error: undefined }
         }
-        return i;
-      });
+        return i
+      })
 
-      setMediaResp(updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
-      return updated;
-    });
-  };
+      setMediaResp(
+        updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]
+      )
+      return updated
+    })
+  }
+
+  // Callback when an individual item's upload fails
+  const handleUploadError = (id: string, error: unknown) => {
+    const errorMsg = getErrorMessage(error)
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, isUploading: false, error: errorMsg } : i
+      )
+    )
+  }
 
   // Remove an item from list and invoke delete mutation if persisted
   const handleRemove = (id: string) => {
-    const itemToRemove = items.find((i) => i.id === id);
-    const backendId = itemToRemove?.resp?.data?._id || itemToRemove?.resp?.data?.id;
-    if (backendId && itemToRemove.file) {
-      deleteMediaMutate({ id: backendId });
+    const itemToRemove = items.find((i) => i.id === id)
+    const backendId =
+      itemToRemove?.resp?.data?._id || itemToRemove?.resp?.data?.id
+    if (backendId && itemToRemove.file && deleteMutate) {
+      deleteMutate({ id: backendId })
     }
 
     setItems((prev) => {
-      const updated = prev.filter((i) => i.id !== id);
-      setMediaResp(updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]);
-      return updated;
-    });
-  };
+      const updated = prev.filter((i) => i.id !== id)
+      setMediaResp(
+        updated.map((i) => i.resp).filter(Boolean) as MediaResponse[]
+      )
+      return updated
+    })
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -143,8 +180,8 @@ const MultiDropBox = ({
       <div
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          "h-28 w-full border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer transition-colors bg-background/30 hover:bg-background/50",
-          errorTooltip && "border-destructive"
+          "flex h-28 w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-background/30 transition-colors hover:bg-background/50",
+          errorTooltip && "border-destructive bg-destructive/5"
         )}
       >
         <input
@@ -156,8 +193,10 @@ const MultiDropBox = ({
           className="hidden"
           aria-label="Upload multiple images"
         />
-        <div className="flex flex-col items-center justify-center gap-1 text-center px-6">
-          <p className="text-muted-foreground">Click or drag images to upload</p>
+        <div className="flex flex-col items-center justify-center gap-1 px-6 text-center">
+          <p className="text-muted-foreground">
+            Click or drag images to upload
+          </p>
           {aspectRatioText && (
             <p className="text-xs font-semibold text-primary/80">
               Recommended Ratio: {aspectRatioText}
@@ -167,25 +206,43 @@ const MultiDropBox = ({
       </div>
 
       {/* Uploaded items grid */}
-      <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
+      <div className="flex max-h-64 flex-col gap-3 overflow-y-auto">
         {items.map((item) => (
           <div
             key={item.id}
             className={cn(
-              "relative flex gap-4 p-2 border rounded-xl bg-card",
-              item.isUploading && "opacity-70"
+              "relative flex gap-4 rounded-xl border bg-card p-2 transition-colors",
+              item.isUploading && "opacity-70",
+              item.error && "border-destructive bg-destructive/5"
             )}
           >
-            <div className="w-24 h-24 overflow-hidden rounded-lg border shrink-0">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border">
               <img
                 src={item.previewUrl}
                 alt="Upload preview"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
               {item.isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                   <Loader />
                 </div>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 cursor-default pr-8">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {item.file?.name || "Uploaded media"}
+              </p>
+              {item.error ? (
+                <p className="mt-1 line-clamp-2 text-xs font-semibold text-destructive">
+                  {item.error}
+                </p>
+              ) : (
+                item.file && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {(item.file.size / 1024).toFixed(1)} KB
+                  </p>
+                )
               )}
             </div>
 
@@ -195,8 +252,8 @@ const MultiDropBox = ({
               disabled={item.isUploading}
               onClick={() => handleRemove(item.id)}
               className={cn(
-                "absolute top-3 right-3 p-1.5 rounded-full bg-background/90 text-muted-foreground cursor-pointer",
-                "hover:bg-destructive/20 hover:text-destructive transition-colors duration-200",
+                "absolute top-3 right-3 cursor-pointer rounded-full bg-background/90 p-1.5 text-muted-foreground",
+                "transition-colors duration-200 hover:bg-destructive/20 hover:text-destructive",
                 item.isUploading && "cursor-not-allowed opacity-50"
               )}
             >
@@ -208,13 +265,16 @@ const MultiDropBox = ({
                 type={type}
                 imageFile={item.file}
                 setResp={(resp) => handleUploadResp(item.id, resp)}
+                onError={(err) => handleUploadError(item.id, err)}
+                uploadMutate={uploadMutate}
+                validateFile={validateFile}
               />
             )}
           </div>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MultiDropBox;
+export default MultiDropBox

@@ -52,14 +52,21 @@ export type MediaType =
  * Standard shape of media upload responses from the backend.
  */
 export interface MediaResponse {
+  message?: string;
   data?: {
     _id?: string;
     id?: string;
     link1?: string;
     link?: string;
+    url?: string;
     type?: string;
     w?: number;
     h?: number;
+    ref?: {
+      id: string;
+      link: string;
+      type: string;
+    };
     [key: string]: unknown;
   };
 }

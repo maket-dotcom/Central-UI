@@ -14,6 +14,7 @@ appInstance.interceptors.request.use(
     }
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`
+      config.headers["x-admin-key"] = token
     }
     return config
   },

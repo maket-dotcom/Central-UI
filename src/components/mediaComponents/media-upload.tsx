@@ -1,61 +1,95 @@
-import { useEffect } from "react";
-import { useAddMedia } from "@/query/useMedia";
-import type { MediaResponse } from "@/configurations/types";
-import {
-  addMediaSchema,
-  type AddMediaInputs,
-} from "@/utils/schemas/mediaSchema";
+import { useEffect, useRef } from "react"
+import type { MediaResponse } from "@/configurations/types"
+
+export interface MediaUploadPayload {
+  image: File
+  name: string
+  type: string
+  parentId?: string
+}
 
 interface MediaUploadProps {
   /** Media categorization type */
-  type: string;
+  type: string
   /** Optional parent resource ID */
-  parentId?: string;
+  parentId?: string
   /** Image or media file to upload */
-  imageFile: File;
+  imageFile: File
   /** Callback fired with the upload response data */
-  setResp: (resp: MediaResponse) => void;
+  setResp: (resp: MediaResponse) => void
+  /** Optional error callback */
+  onError?: (error: unknown) => void
+  /** Optional upload mutation trigger function */
+  uploadMutate?: (
+    payload: MediaUploadPayload,
+    options?: {
+      onSuccess?: (resp: MediaResponse) => void
+      onError?: (err: unknown) => void
+    }
+  ) => void
+  /** Optional validation function */
+  validateFile?: (file: File) => { success: boolean; error?: string }
 }
 
 /**
  * Headless media upload worker component that triggers the upload mutation upon receiving a file.
+ * Decoupled from app-specific queries.
  */
 const MediaUpload = ({
   type,
   parentId,
   imageFile,
   setResp,
+  onError,
+  uploadMutate,
+  validateFile,
 }: MediaUploadProps) => {
-  const { mutate } = useAddMedia();
+  const setRespRef = useRef(setResp)
+  const onErrorRef = useRef(onError)
+  const uploadedFileRef = useRef<File | null>(null)
 
   useEffect(() => {
-    if (!imageFile) return;
+    setRespRef.current = setResp
+    onErrorRef.current = onError
+  }, [setResp, onError])
 
-    const payload: AddMediaInputs = {
+  useEffect(() => {
+    // Prevent re-uploading the same file instance across renders
+    if (!imageFile || uploadedFileRef.current === imageFile) return
+    uploadedFileRef.current = imageFile
+
+    // Validate file if validator is supplied
+    if (validateFile) {
+      const validation = validateFile(imageFile)
+      if (!validation.success) {
+        uploadedFileRef.current = null
+        onErrorRef.current?.(new Error(validation.error || "Invalid file"))
+        return
+      }
+    }
+
+    const payload: MediaUploadPayload = {
       image: imageFile,
       name: imageFile.name,
       type,
       ...(parentId ? { parentId } : {}),
-    };
-
-    // Validate payload against schema before initiating upload
-    const parseResult = addMediaSchema.safeParse(payload);
-    if (!parseResult.success) {
-      console.error("Validation failed:", parseResult.error.format());
-      return;
     }
 
-    mutate(payload, {
-      onSuccess: (resp) => {
-        setResp(resp);
-      },
-      onError: (err) => {
-        console.error("Upload failed:", err);
-      },
-    });
-  }, [imageFile, type, parentId, mutate, setResp]);
+    if (uploadMutate) {
+      uploadMutate(payload, {
+        onSuccess: (resp) => {
+          setRespRef.current(resp)
+        },
+        onError: (err) => {
+          console.error("Upload failed:", err)
+          uploadedFileRef.current = null
+          onErrorRef.current?.(err)
+        },
+      })
+    }
+  }, [imageFile, type, parentId, uploadMutate, validateFile])
 
-  return null; // Headless component (no DOM output)
-};
+  return null // Headless component (no DOM output)
+}
 
-export default MediaUpload;
+export default MediaUpload

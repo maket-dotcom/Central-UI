@@ -11,15 +11,32 @@ import { AxiosError } from "axios"
 export const getErrorMessage = (error: unknown): string => {
   // If the error originated from Axios HTTP requests
   if (error instanceof AxiosError) {
-    if (
-      typeof error.response?.data === "string" &&
-      error.response.data.trim()
-    ) {
-      return error.response.data
+    const responseData = error.response?.data
+    if (typeof responseData === "string" && responseData.trim()) {
+      return responseData
+    }
+    if (responseData && typeof responseData === "object") {
+      const data = responseData as Record<string, unknown>
+      if (typeof data.error === "string" && data.error.trim()) {
+        return data.error
+      }
+      if (typeof data.message === "string" && data.message.trim()) {
+        return data.message
+      }
+      if (Array.isArray(data.errors) && data.errors.length > 0) {
+        const first = data.errors[0]
+        if (typeof first === "string") return first
+        if (
+          first &&
+          typeof first === "object" &&
+          "message" in first &&
+          typeof (first as Record<string, unknown>).message === "string"
+        ) {
+          return (first as Record<string, unknown>).message as string
+        }
+      }
     }
     return (
-      error.response?.data?.message ||
-      error.response?.data?.error ||
       error.message ||
       "An unexpected error occurred"
     )

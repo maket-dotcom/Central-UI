@@ -6,15 +6,16 @@ import {
   deleteManyMedia,
   deleteMediaById,
   getAllMedias,
-} from "@/services/media"
+  getMediaById,
+} from "@/services/keyboard/media"
 import type {
   AddMediaInputs,
   DeleteMediaById,
   DeleteManyMediaInputs,
-} from "@/utils/schemas/mediaSchema"
+} from "@/utils/schemas/keyboard/mediaSchema"
 
 /**
- * Mutation hook for uploading a media asset.
+ * Mutation hook for uploading a media asset to Keyboard backend.
  */
 export const useAddMedia = () => {
   const queryClient = useQueryClient()
@@ -31,7 +32,7 @@ export const useAddMedia = () => {
 }
 
 /**
- * Mutation hook for deleting a single media asset by ID.
+ * Mutation hook for deleting a single media asset by ID from Keyboard backend.
  */
 export const useDeleteMediaById = () => {
   const queryClient = useQueryClient()
@@ -48,7 +49,7 @@ export const useDeleteMediaById = () => {
 }
 
 /**
- * Mutation hook for deleting multiple media assets.
+ * Mutation hook for deleting multiple media assets from Keyboard backend.
  */
 export const useDeleteManyMedia = () => {
   const queryClient = useQueryClient()
@@ -67,11 +68,22 @@ export const useDeleteManyMedia = () => {
 }
 
 /**
- * Query hook for retrieving all media assets.
+ * Query hook for retrieving a single media asset by ID from Keyboard backend.
  */
-export const useGetAllMedias = () => {
+export const useGetMediaById = (id: string) => {
   return useQuery({
-    queryKey: ["getAllMedias"],
-    queryFn: getAllMedias,
+    queryKey: ["mediaById", id],
+    queryFn: () => getMediaById(id),
+    enabled: !!id,
+  })
+}
+
+/**
+ * Query hook for retrieving media assets with optional filter and pagination parameters.
+ */
+export const useGetAllMedias = (params?: Record<string, unknown>) => {
+  return useQuery({
+    queryKey: ["getAllMedias", params],
+    queryFn: () => getAllMedias(params),
   })
 }
