@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   updateCampaignSchema,
@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardHeader,
@@ -28,21 +28,20 @@ import KeyboardSingleDropBox from "@/pages/apps/keyboard/components/keyboard-sin
 import Loader from "@/components/loader"
 import { toast } from "sonner"
 import { useDeleteMediaById } from "@/query/keyboard/useMedia"
-import { ArrowLeft, Code, ExternalLink } from "lucide-react"
+import { ArrowLeft, Layers, FileCode2, ExternalLink } from "lucide-react"
 import { IconBrandAndroid, IconBrandApple } from "@tabler/icons-react"
 import SelectComponent from "@/components/inputComponents/select-component"
+import { JsonEditorComponent } from "@/components/inputComponents/json-editor-component"
 import { getFirstFormErrorMessage } from "@/utils/formUtils"
 
 export default function UpdateCampaign() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [mediaResp, setMediaResp] = useState<MediaResponse | null>(null)
-  const [extrasInput, setExtrasInput] = useState<string>("")
-  const [extrasError, setExtrasError] = useState<string | null>(null)
 
   const [isIconRemoved, setIsIconRemoved] = useState<boolean>(false)
 
-  const { data: campaignResp, isLoading } = useGetCampaignById(id || "")
+  const { data: campaignResp, isLoading, isError } = useGetCampaignById(id || "")
   const { mutate, isPending } = useUpdateCampaign()
   const { mutate: deleteMediaMutate } = useDeleteMediaById()
 
@@ -60,6 +59,7 @@ export default function UpdateCampaign() {
     setError,
     clearErrors,
     handleSubmit,
+    control,
     reset,
     watch,
     formState: { errors },
@@ -77,11 +77,13 @@ export default function UpdateCampaign() {
         packageName: "",
         link: "",
       },
+      extras: {},
     },
   })
 
   const watchedIcon = watch("icon")
   const watchedStatus = watch("status")
+  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<string, unknown>
 
   // Hydrate form when campaign data loads
   useEffect(() => {
@@ -99,12 +101,8 @@ export default function UpdateCampaign() {
           packageName: campaign.ios?.packageName || "",
           link: campaign.ios?.link || "",
         },
+        extras: campaign.extras || {},
       })
-      if (campaign.extras && Object.keys(campaign.extras).length > 0) {
-        setExtrasInput(JSON.stringify(campaign.extras, null, 2))
-      } else {
-        setExtrasInput("")
-      }
     }
   }, [campaign, reset])
 
@@ -148,29 +146,6 @@ export default function UpdateCampaign() {
     })
   }
 
-  // Validate extras JSON whenever modified
-  const handleExtrasChange = (val: string) => {
-    setExtrasInput(val)
-    if (!val.trim()) {
-      setExtrasError(null)
-      return
-    }
-    try {
-      const parsed = JSON.parse(val)
-      if (
-        typeof parsed !== "object" ||
-        parsed === null ||
-        Array.isArray(parsed)
-      ) {
-        setExtrasError("Extras must be a valid JSON key-value object")
-      } else {
-        setExtrasError(null)
-      }
-    } catch {
-      setExtrasError("Invalid JSON syntax")
-    }
-  }
-
   const onSubmit = (data: UpdateCampaignInputs) => {
     if (!id) return
 
@@ -181,26 +156,6 @@ export default function UpdateCampaign() {
       })
       toast.error("Please upload an icon asset for the campaign")
       return
-    }
-
-    let parsedExtras: Record<string, unknown> | null = null
-    if (extrasInput.trim()) {
-      try {
-        const parsed = JSON.parse(extrasInput.trim())
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          !Array.isArray(parsed)
-        ) {
-          parsedExtras = parsed
-        } else {
-          toast.error("Extras must be a JSON object")
-          return
-        }
-      } catch {
-        toast.error("Invalid JSON in Extras field")
-        return
-      }
     }
 
     const androidPayload: PlatformCampaignConfig | null =
@@ -231,7 +186,7 @@ export default function UpdateCampaign() {
       status: data.status,
       android: androidPayload,
       ios: iosPayload,
-      extras: parsedExtras,
+      extras: data.extras || null,
     }
 
     mutate(
@@ -277,92 +232,140 @@ export default function UpdateCampaign() {
     )
   }
 
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit, (formErrors) => {
-        const errorMsg = getFirstFormErrorMessage(formErrors)
-        if (errorMsg) {
-          toast.error(errorMsg)
-        }
-      })}
-      className="flex flex-1 flex-col gap-6"
-    >
-      <div className="flex flex-col gap-6">
-        {/* Header with back navigation */}
-        <div className="flex items-center gap-4">
+  if (isError || !campaign) {
+    return (
+      <div className="flex flex-1 flex-col gap-6 w-full">
+        <div className="overflow-hidden rounded-xl border border-destructive/30 bg-destructive/10 p-8 text-center">
+          <h2 className="text-base font-semibold text-destructive">
+            Campaign Not Found
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The requested campaign could not be found or has been removed.
+          </p>
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
             onClick={handleCancel}
-            aria-label="Back to campaigns"
+            variant="outline"
+            size="sm"
+            className="mt-4 cursor-pointer"
           >
-            <ArrowLeft className="h-4 w-4" />
+            Back to Campaigns
           </Button>
-          <div className="flex cursor-default flex-col gap-1 text-left">
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-6 w-full">
+      {/* Header with back navigation */}
+      <div className="flex items-center gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={handleCancel}
+          aria-label="Back to campaigns"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex cursor-default flex-col gap-1 text-left">
+          <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">
               Update Campaign
             </h1>
-            <p className="text-sm text-balance text-muted-foreground">
-              Edit details, platform targets, or upload a new icon for &ldquo;
-              {campaign?.name}&rdquo;
-            </p>
+            {campaign.status && (
+              <Badge
+                variant={campaign.status === "active" ? "default" : "secondary"}
+                className="capitalize text-xs"
+              >
+                {campaign.status}
+              </Badge>
+            )}
+            {campaign.android?.packageName && (
+              <Badge variant="outline" className="text-xs">
+                Android
+              </Badge>
+            )}
+            {campaign.ios?.packageName && (
+              <Badge variant="outline" className="text-xs">
+                iOS
+              </Badge>
+            )}
           </div>
+          <p className="text-sm text-balance text-muted-foreground">
+            Edit details, platform targets, or upload a new icon for &ldquo;
+            {campaign.name}&rdquo;
+          </p>
         </div>
+      </div>
 
+      <form
+        onSubmit={handleSubmit(onSubmit, (formErrors) => {
+          const errorMsg = getFirstFormErrorMessage(formErrors)
+          if (errorMsg) {
+            toast.error(errorMsg)
+          }
+        })}
+        className="flex flex-col gap-6"
+      >
         {/* 1. Basic Information Card */}
         <Card className="border border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              1. Basic Information
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">
+                1. Basic Information
+              </CardTitle>
+            </div>
             <CardDescription className="text-xs">
               Primary display title and icon asset
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Campaign Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="e.g. Spotify Music"
-                aria-invalid={errors.name ? "true" : "false"}
-                {...register("name")}
-              />
-              {errors.name && (
-                <p className="text-xs font-medium text-destructive">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Campaign Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="e.g. Spotify Music"
+                  aria-invalid={errors.name ? "true" : "false"}
+                  {...register("name")}
+                />
+                {errors.name && (
+                  <p className="text-xs font-medium text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Campaign Status */}
-            <div className="grid gap-2">
-              <Label htmlFor="status">Campaign Status</Label>
-              <SelectComponent
-                id="status"
-                value={watchedStatus || "active"}
-                onValueChange={(val) =>
-                  setValue("status", val as "active" | "paused", {
-                    shouldValidate: true,
-                  })
-                }
-                data={[
-                  {
-                    name: "Active (Visible to keyboard clients)",
-                    value: "active",
-                  },
-                  {
-                    name: "Paused (Hidden from keyboard clients)",
-                    value: "paused",
-                  },
-                ]}
-              />
-              <p className="text-xs text-muted-foreground">
-                Only active campaigns are served to mobile keyboards. Paused
-                campaigns are excluded.
-              </p>
+              {/* Campaign Status */}
+              <div className="grid gap-2">
+                <Label htmlFor="status">Campaign Status</Label>
+                <SelectComponent
+                  id="status"
+                  value={watchedStatus || "active"}
+                  onValueChange={(val) =>
+                    setValue("status", val as "active" | "paused", {
+                      shouldValidate: true,
+                    })
+                  }
+                  data={[
+                    {
+                      name: "Active (Visible to keyboard clients)",
+                      value: "active",
+                    },
+                    {
+                      name: "Paused (Hidden from keyboard clients)",
+                      value: "paused",
+                    },
+                  ]}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only active campaigns are served to mobile keyboards. Paused
+                  campaigns are excluded.
+                </p>
+              </div>
             </div>
 
             {/* Icon upload & replace */}
@@ -524,38 +527,33 @@ export default function UpdateCampaign() {
 
         {/* 4. Extras Metadata Section */}
         <Card className="border border-border shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Code className="size-4 text-muted-foreground" />
-                <div>
-                  <CardTitle className="text-sm font-semibold">
-                    4. Additional Metadata (Extras)
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Arbitrary JSON metadata for tags, badges, or categories
-                  </CardDescription>
-                </div>
-              </div>
-              <span className="text-[11px] text-muted-foreground">
-                Optional JSON format
-              </span>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileCode2 className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">
+                3. Additional Metadata (Extras)
+              </CardTitle>
             </div>
+            <CardDescription className="text-xs">
+              Optional arbitrary JSON payload metadata for custom keyboard properties
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea
-              id="extras"
-              rows={4}
-              placeholder={`{\n  "category": "audio",\n  "badge": "Hot",\n  "priority": 20\n}`}
-              value={extrasInput}
-              onChange={(e) => handleExtrasChange(e.target.value)}
-              className="font-mono text-xs"
+            <JsonEditorComponent
+              id="extras-editor"
+              label="JSON Extras Object"
+              value={watchedExtras}
+              onChange={(parsedVal) => {
+                setValue("extras", parsedVal, { shouldValidate: true })
+              }}
+              disabled={isPending}
+              error={
+                errors.extras?.message
+                  ? String(errors.extras.message)
+                  : undefined
+              }
+              minHeight="180px"
             />
-            {extrasError && (
-              <p className="mt-1.5 text-xs font-medium text-destructive">
-                {extrasError}
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -564,7 +562,7 @@ export default function UpdateCampaign() {
           <Button
             type="submit"
             className="w-full flex-1 cursor-pointer sm:w-auto"
-            disabled={isPending || !!extrasError}
+            disabled={isPending}
           >
             {isPending && <Loader />}
             Update Campaign
@@ -579,7 +577,7 @@ export default function UpdateCampaign() {
             Cancel
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   )
 }

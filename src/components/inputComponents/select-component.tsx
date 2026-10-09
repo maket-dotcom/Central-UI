@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import {
@@ -51,6 +49,7 @@ interface SelectProps {
   value?: string;
   data?: SelectOption[];
   search?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -70,6 +69,7 @@ const SelectComponent = ({
   value,
   data = [],
   search = false,
+  disabled = false,
 }: SelectProps) => {
   const [open, setOpen] = useState(false);
 
@@ -82,6 +82,7 @@ const SelectComponent = ({
         type="button"
         id={id}
         role="combobox"
+        disabled={disabled}
         aria-expanded={open}
         aria-invalid={ariaInvalid}
         className={cn(
@@ -149,6 +150,11 @@ const SelectComponent = ({
     );
   }
 
+  // Prepare items structure for Base UI Select so it recognizes labels
+  const baseItems = useMemo(() => {
+    return data.map((d) => ({ value: d.value, label: d.name }));
+  }, [data]);
+
   // Standard select dropdown variant
   const triggerElement = (
     <SelectTrigger
@@ -157,13 +163,22 @@ const SelectComponent = ({
       className={cn("cursor-pointer w-full", className)}
       size={size}
     >
-      <SelectValue placeholder={placeholder || "Select"} />
+      <SelectValue placeholder={placeholder || "Select"}>
+        {(val) => {
+          const selectedOption = data.find((d) => d.value === val);
+          return selectedOption
+            ? selectedOption.name
+            : (val || placeholder || "Select");
+        }}
+      </SelectValue>
     </SelectTrigger>
   );
 
   return (
     <Select
       name={name}
+      items={baseItems}
+      disabled={disabled}
       onValueChange={(val) => {
         if (typeof val === "string") onValueChange?.(val);
       }}
@@ -187,6 +202,7 @@ const SelectComponent = ({
             <SelectItem
               key={`${d.value}-${index}`}
               value={d.value}
+              label={d.name}
               className="cursor-pointer"
             >
               {d.name}

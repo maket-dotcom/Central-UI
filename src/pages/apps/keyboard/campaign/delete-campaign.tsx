@@ -40,7 +40,7 @@ export default function DeleteCampaign({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Delete Campaign</DialogTitle>
           <DialogDescription>

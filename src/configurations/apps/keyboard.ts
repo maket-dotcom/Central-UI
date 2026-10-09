@@ -1,4 +1,11 @@
-import { IconBrandCampaignmonitor, IconHome } from "@tabler/icons-react"
+import {
+  IconBrandCampaignmonitor,
+  IconHome,
+  IconToggleLeft,
+  IconAdjustments,
+  IconRocket,
+  IconDeviceMobileCheck,
+} from "@tabler/icons-react"
 import type { AppSidebarConfig } from "../types"
 
 /**
@@ -17,8 +24,25 @@ export const keyboardSidebarConfig: AppSidebarConfig = {
       url: "/keyboard/campaign",
       icon: IconBrandCampaignmonitor,
     },
-    // Future keyboard features to be added here:
-    // { title: "Themes", url: "/keyboard/themes", icon: IconPalette },
-    // { title: "Settings", url: "/keyboard/settings", icon: IconSettings },
+    {
+      title: "Feature Flags",
+      url: "/keyboard/features",
+      icon: IconToggleLeft,
+    },
+    {
+      title: "Remote Config",
+      url: "/keyboard/remote-config",
+      icon: IconAdjustments,
+    },
+    {
+      title: "Releases",
+      url: "/keyboard/releases",
+      icon: IconRocket,
+    },
+    {
+      title: "Testers",
+      url: "/keyboard/testers",
+      icon: IconDeviceMobileCheck,
+    },
   ],
 }

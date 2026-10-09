@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   addCampaignSchema,
@@ -11,7 +11,6 @@ import { useCreateCampaign } from "@/query/keyboard/useCampaign"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Card,
   CardHeader,
@@ -24,16 +23,15 @@ import KeyboardSingleDropBox from "@/pages/apps/keyboard/components/keyboard-sin
 import Loader from "@/components/loader"
 import { toast } from "sonner"
 import { useDeleteMediaById } from "@/query/keyboard/useMedia"
-import { ArrowLeft, Code } from "lucide-react"
+import { ArrowLeft, Layers, FileCode2 } from "lucide-react"
 import { IconBrandAndroid, IconBrandApple } from "@tabler/icons-react"
 import SelectComponent from "@/components/inputComponents/select-component"
+import { JsonEditorComponent } from "@/components/inputComponents/json-editor-component"
 import { getFirstFormErrorMessage } from "@/utils/formUtils"
 
 export default function AddCampaign() {
   const navigate = useNavigate()
   const [mediaResp, setMediaResp] = useState<MediaResponse | null>(null)
-  const [extrasInput, setExtrasInput] = useState<string>("")
-  const [extrasError, setExtrasError] = useState<string | null>(null)
 
   const { mutate, isPending } = useCreateCampaign()
   const { mutate: deleteMediaMutate } = useDeleteMediaById()
@@ -44,6 +42,7 @@ export default function AddCampaign() {
     setError,
     clearErrors,
     handleSubmit,
+    control,
     watch,
     formState: { errors },
   } = useForm<AddCampaignInputs>({
@@ -60,11 +59,13 @@ export default function AddCampaign() {
         packageName: "",
         link: "",
       },
+      extras: {},
     },
   })
 
   const watchedIcon = watch("icon")
   const watchedStatus = watch("status")
+  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<string, unknown>
 
   // Sync uploaded media into form icon object
   useEffect(() => {
@@ -104,29 +105,6 @@ export default function AddCampaign() {
     })
   }
 
-  // Validate extras JSON whenever modified
-  const handleExtrasChange = (val: string) => {
-    setExtrasInput(val)
-    if (!val.trim()) {
-      setExtrasError(null)
-      return
-    }
-    try {
-      const parsed = JSON.parse(val)
-      if (
-        typeof parsed !== "object" ||
-        parsed === null ||
-        Array.isArray(parsed)
-      ) {
-        setExtrasError("Extras must be a valid JSON key-value object")
-      } else {
-        setExtrasError(null)
-      }
-    } catch {
-      setExtrasError("Invalid JSON syntax")
-    }
-  }
-
   const onSubmit = (data: AddCampaignInputs) => {
     if (!data.icon || !data.icon.id) {
       setError("icon", {
@@ -135,26 +113,6 @@ export default function AddCampaign() {
       })
       toast.error("Please upload an icon asset for the campaign")
       return
-    }
-
-    let parsedExtras: Record<string, unknown> | undefined = undefined
-    if (extrasInput.trim()) {
-      try {
-        const parsed = JSON.parse(extrasInput.trim())
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          !Array.isArray(parsed)
-        ) {
-          parsedExtras = parsed
-        } else {
-          toast.error("Extras must be a JSON object")
-          return
-        }
-      } catch {
-        toast.error("Invalid JSON in Extras field")
-        return
-      }
     }
 
     // Clean up empty platform objects
@@ -186,7 +144,9 @@ export default function AddCampaign() {
       status: data.status || "active",
       ...(androidPayload ? { android: androidPayload } : {}),
       ...(iosPayload ? { ios: iosPayload } : {}),
-      ...(parsedExtras ? { extras: parsedExtras } : {}),
+      ...(data.extras && Object.keys(data.extras).length > 0
+        ? { extras: data.extras }
+        : {}),
     }
 
     mutate(
@@ -209,91 +169,96 @@ export default function AddCampaign() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit, (formErrors) => {
-        const errorMsg = getFirstFormErrorMessage(formErrors)
-        if (errorMsg) {
-          toast.error(errorMsg)
-        }
-      })}
-      className="flex flex-1 flex-col gap-6"
-    >
-      <div className="flex flex-col gap-6">
-        {/* Header with back navigation */}
-        <div className="flex items-center gap-4">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleCancel}
-            aria-label="Back to campaigns"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex cursor-default flex-col gap-1 text-left">
-            <h1 className="text-2xl font-bold tracking-tight">
-              Create New Campaign
-            </h1>
-            <p className="text-sm text-balance text-muted-foreground">
-              Configure promoted shortcut suggestions, platform-specific
-              targets, and icon assets
-            </p>
-          </div>
+    <div className="flex flex-1 flex-col gap-6 w-full">
+      {/* Header with back navigation */}
+      <div className="flex items-center gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={handleCancel}
+          aria-label="Back to campaigns"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex cursor-default flex-col gap-1 text-left">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Create New Campaign
+          </h1>
+          <p className="text-sm text-balance text-muted-foreground">
+            Configure promoted shortcut suggestions, platform-specific
+            targets, and icon assets
+          </p>
         </div>
+      </div>
 
+      <form
+        onSubmit={handleSubmit(onSubmit, (formErrors) => {
+          const errorMsg = getFirstFormErrorMessage(formErrors)
+          if (errorMsg) {
+            toast.error(errorMsg)
+          }
+        })}
+        className="flex flex-col gap-6"
+      >
         {/* 1. Basic Information Section */}
         <Card className="border border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              1. Basic Information
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">
+                1. Basic Information
+              </CardTitle>
+            </div>
             <CardDescription className="text-xs">
               Primary display title and keyboard icon asset
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Campaign Name *</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="e.g. Spotify Music"
-                aria-invalid={errors.name ? "true" : "false"}
-                {...register("name")}
-              />
-              {errors.name && (
-                <p className="text-xs font-medium text-destructive">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Campaign Name *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="e.g. Spotify Music"
+                  aria-invalid={errors.name ? "true" : "false"}
+                  {...register("name")}
+                />
+                {errors.name && (
+                  <p className="text-xs font-medium text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Campaign Status */}
-            <div className="grid gap-2">
-              <Label htmlFor="status">Campaign Status</Label>
-              <SelectComponent
-                id="status"
-                value={watchedStatus || "active"}
-                onValueChange={(val) =>
-                  setValue("status", val as "active" | "paused", {
-                    shouldValidate: true,
-                  })
-                }
-                data={[
-                  {
-                    name: "Active (Visible to keyboard clients)",
-                    value: "active",
-                  },
-                  {
-                    name: "Paused (Hidden from keyboard clients)",
-                    value: "paused",
-                  },
-                ]}
-              />
-              <p className="text-xs text-muted-foreground">
-                Only active campaigns are served to mobile keyboards. Paused
-                campaigns are excluded.
-              </p>
+              {/* Campaign Status */}
+              <div className="grid gap-2">
+                <Label htmlFor="status">Campaign Status</Label>
+                <SelectComponent
+                  id="status"
+                  value={watchedStatus || "active"}
+                  onValueChange={(val) =>
+                    setValue("status", val as "active" | "paused", {
+                      shouldValidate: true,
+                    })
+                  }
+                  data={[
+                    {
+                      name: "Active (Visible to keyboard clients)",
+                      value: "active",
+                    },
+                    {
+                      name: "Paused (Hidden from keyboard clients)",
+                      value: "paused",
+                    },
+                  ]}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only active campaigns are served to mobile keyboards. Paused
+                  campaigns are excluded.
+                </p>
+              </div>
             </div>
 
             {/* 2-Step Icon Upload */}
@@ -436,38 +401,33 @@ export default function AddCampaign() {
 
         {/* 4. Extras Metadata Section */}
         <Card className="border border-border shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Code className="size-4 text-muted-foreground" />
-                <div>
-                  <CardTitle className="text-sm font-semibold">
-                    4. Additional Metadata (Extras)
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Arbitrary JSON metadata for tags, badges, or categories
-                  </CardDescription>
-                </div>
-              </div>
-              <span className="text-[11px] text-muted-foreground">
-                Optional JSON format
-              </span>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileCode2 className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">
+                3. Additional Metadata (Extras)
+              </CardTitle>
             </div>
+            <CardDescription className="text-xs">
+              Optional arbitrary JSON payload metadata for custom keyboard properties
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea
-              id="extras"
-              rows={4}
-              placeholder={`{\n  "category": "audio",\n  "badge": "Hot",\n  "priority": 10\n}`}
-              value={extrasInput}
-              onChange={(e) => handleExtrasChange(e.target.value)}
-              className="font-mono text-xs"
+            <JsonEditorComponent
+              id="extras-editor"
+              label="JSON Extras Object"
+              value={watchedExtras}
+              onChange={(parsedVal) => {
+                setValue("extras", parsedVal, { shouldValidate: true })
+              }}
+              disabled={isPending}
+              error={
+                errors.extras?.message
+                  ? String(errors.extras.message)
+                  : undefined
+              }
+              minHeight="180px"
             />
-            {extrasError && (
-              <p className="mt-1.5 text-xs font-medium text-destructive">
-                {extrasError}
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -476,7 +436,7 @@ export default function AddCampaign() {
           <Button
             type="submit"
             className="w-full flex-1 cursor-pointer sm:w-auto"
-            disabled={isPending || !!extrasError}
+            disabled={isPending}
           >
             {isPending && <Loader />}
             Create Campaign
@@ -491,7 +451,7 @@ export default function AddCampaign() {
             Cancel
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   )
 }

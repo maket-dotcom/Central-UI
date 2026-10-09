@@ -1,5 +1,9 @@
 import { keyboardHomeConfig } from "./home/home-config"
 import CampaignConfig from "./campaign/campaign-config"
+import FeatureConfig from "./features/feature-config"
+import RemoteConfigConfig from "./remoteConfig/remote-config-config"
+import ReleaseConfig from "./releases/release-config"
+import TesterConfig from "./testers/tester-config"
 import AppGuard from "@/routes/app-guard"
 import Layout from "@/components/layout"
 import ProtectedRoute from "@/routes/protected-route"
@@ -17,10 +21,16 @@ export const KeyboardAppRoutes = {
   children: [
     // Redirect /keyboard to /keyboard/home
     { index: true, element: <Navigate to="/keyboard/home" replace /> },
-    // Catch-all for unknown /keyboard/* routes
-    { path: "*", element: <Navigate to="/keyboard/home" replace /> },
 
+    // Core Dashboard & App Modules
     keyboardHomeConfig,
     CampaignConfig,
+    FeatureConfig,
+    RemoteConfigConfig,
+    ReleaseConfig,
+    TesterConfig,
+
+    // Catch-all for unknown /keyboard/* routes
+    { path: "*", element: <Navigate to="/keyboard/home" replace /> },
   ],
 }
