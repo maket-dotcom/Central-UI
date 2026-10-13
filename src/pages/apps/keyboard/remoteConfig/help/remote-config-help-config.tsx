@@ -1,540 +1,323 @@
 import type { HelpDrawerConfig } from "@/components/helpTour/types"
-import { Badge } from "@/components/ui/badge"
-import {
-  GitMerge,
-  History,
-  AlertTriangle,
-  RotateCcw,
-  Split,
-} from "lucide-react"
+import { Layers, Copy, FileCode2, CheckCircle2 } from "lucide-react"
 
 export const remoteConfigHelpConfig: HelpDrawerConfig = {
   moduleName: "Remote Config",
   title: "Remote Configuration Operations Guide",
-  subtitle:
-    "3-Tier Deep Merge Engine, Optimistic Concurrency Control, and 1-Click Rollback",
-  versionTag: "Remote Config v1.4",
+  subtitle: "Version-Tiered Dynamic Configuration Delivery",
+  versionTag: "Remote Config v2.0",
 
-  // 1. TOPICS (Guide & Architecture)
+  // 1. ARCHITECTURAL TOPICS
   topics: [
     {
-      id: "three-tier-deep-merge",
-      title: "The 3-Tier Deep-Merge Engine",
+      id: "version-tier-resolution",
+      title: "Version-Tier Resolution Engine",
       badge: "Core Architecture",
-      icon: GitMerge,
+      icon: Layers,
       summary:
-        "How platform defaults (all) merge with OS-specific overrides (android / ios)",
+        "How mobile devices receive their specific configuration tier based on app build number",
       content: (
         <div className="space-y-4 text-xs leading-relaxed">
           <p className="text-muted-foreground">
-            Remote Configuration organizes application settings into isolated{" "}
-            <strong>Namespaces</strong> (e.g.,{" "}
-            <code className="font-mono text-primary">keyboard_settings</code>,{" "}
-            <code className="font-mono text-primary">haptic_feedback</code>).
-            Within each namespace, configurations follow a 3-tier resolution
-            engine:
+            Remote Configuration delivers runtime settings to client mobile devices
+            using a deterministic single-query resolution engine based on the client's
+            operating system (<strong>Android</strong> or <strong>iOS</strong>) and
+            installed build number (
+            <code className="font-mono text-primary">minBuildNumber</code>).
           </p>
 
           <div className="space-y-3 rounded-xl border border-border bg-card p-4">
             <div className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Platform Hierarchy & Merge Pipeline
+              How Resolution Works (O(1) Indexed Lookup)
             </div>
 
             <div className="space-y-2">
               {[
                 {
-                  tier: "Tier 1",
-                  title: "Global Baseline Foundation ('all')",
-                  desc: "Platform 'all' establishes baseline keys for every mobile device worldwide regardless of operating system.",
-                  badge: "Rank 0",
+                  tier: "Step 1",
+                  title: "Target Tier Lookup",
+                  desc: "When a device requests /api/v1/client/config?buildNumber=X, the backend queries: platform == client.platform AND minBuildNumber <= client.buildNumber, sorted descending by minBuildNumber with limit 1.",
                 },
                 {
-                  tier: "Tier 2",
-                  title: "Platform-Specific Overrides ('android' / 'ios')",
-                  desc: "Matches client OS and deep-merges on top of Tier 1. Keys defined here overwrite or extend baseline settings.",
-                  badge: "Rank 1",
+                  tier: "Step 2",
+                  title: "Direct Nested JSON Payload",
+                  desc: "The client receives the exact JSON values dictionary stored in that document. No complex inheritance merges or flattening.",
                 },
                 {
-                  tier: "Tier 3",
-                  title: "Client Flattening & ETag Delivery",
-                  desc: "Extracts all namespace dictionaries into a single root key-value map for fast, zero-traversal mobile lookups.",
-                  badge: "Output",
+                  tier: "Step 3",
+                  title: "ETag Caching (304 Not Modified)",
+                  desc: "A SHA-256 ETag signature is returned with each response. If the client sends an 'If-None-Match' header matching the current payload, the server returns 304 Not Modified without payload bandwidth overhead.",
                 },
               ].map((t, idx) => (
                 <div
                   key={t.tier}
-                  className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-2.5 transition-colors hover:bg-muted/60"
+                  className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-2.5"
                 >
                   <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold text-primary">
                     {idx + 1}
                   </div>
                   <div className="flex-1 space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-foreground">
-                        {t.title}
-                      </span>
-                      <Badge variant="outline" className="text-[10px]">
-                        {t.badge}
-                      </Badge>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      {t.desc}
-                    </p>
+                    <span className="font-semibold text-foreground">{t.title}</span>
+                    <p className="text-[11px] text-muted-foreground">{t.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2 rounded-lg border border-border bg-card p-3">
-            <div className="text-[11px] font-semibold text-foreground">
-              Deep-Merge Type Matrix:
+          <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+            <div className="font-semibold text-foreground">
+              Example Active Build Windows:
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[11px]">
-                <thead className="bg-muted text-muted-foreground">
-                  <tr>
-                    <th className="p-1.5">Data Type</th>
-                    <th className="p-1.5">"all" Baseline</th>
-                    <th className="p-1.5">OS Override</th>
-                    <th className="p-1.5">Resolved Client Value</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="p-1.5 font-bold">Boolean / Number</td>
-                    <td className="p-1.5 font-mono text-muted-foreground">
-                      vibration_ms: 30
-                    </td>
-                    <td className="p-1.5 font-mono text-primary">
-                      vibration_ms: 50
-                    </td>
-                    <td className="p-1.5 font-mono font-bold text-emerald-600">
-                      vibration_ms: 50 (Replaces)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-1.5 font-bold">Unmodified Key</td>
-                    <td className="p-1.5 font-mono text-muted-foreground">
-                      theme: "dark"
-                    </td>
-                    <td className="p-1.5 text-muted-foreground italic">
-                      (not specified)
-                    </td>
-                    <td className="p-1.5 font-mono font-bold text-emerald-600">
-                      theme: "dark" (Inherited)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-1.5 font-bold">Nested Object</td>
-                    <td className="p-1.5 font-mono text-muted-foreground">
-                      &#123; font: "Inter", radius: 8 &#125;
-                    </td>
-                    <td className="p-1.5 font-mono text-primary">
-                      &#123; radius: 12 &#125;
-                    </td>
-                    <td className="p-1.5 font-mono font-bold text-emerald-600">
-                      &#123; font: "Inter", radius: 12 &#125; (Deep Merged)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-1.5 font-bold">Array</td>
-                    <td className="p-1.5 font-mono text-muted-foreground">
-                      ["en", "es"]
-                    </td>
-                    <td className="p-1.5 font-mono text-primary">
-                      ["en", "hi"]
-                    </td>
-                    <td className="p-1.5 font-mono font-bold text-emerald-600">
-                      ["en", "hi"] (Array Replaced)
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+              <li>
+                <strong>Tier 1 (minBuildNumber: 1):</strong> Active for all devices on
+                Build #1 through #9.
+              </li>
+              <li>
+                <strong>Tier 2 (minBuildNumber: 10):</strong> Active for all devices on
+                Build #10 through #24.
+              </li>
+              <li>
+                <strong>Tier 3 (minBuildNumber: 25):</strong> Active for all devices on
+                Build #25 and higher (Latest active tier).
+              </li>
+            </ul>
           </div>
         </div>
       ),
     },
-
     {
-      id: "optimistic-concurrency-history",
-      title: "Optimistic Concurrency & 1-Click Rollback",
-      badge: "Version Safety",
-      icon: History,
+      id: "json-parameter-editor",
+      title: "Configuration Parameters (JSON Editor)",
+      badge: "Form & Validation",
+      icon: FileCode2,
       summary:
-        "expectedVersion locking protocol and immutable history snapshots",
+        "Structuring, formatting, and validating arbitrary JSON configuration payloads",
       content: (
-        <div className="space-y-4 text-xs leading-relaxed">
-          <p className="text-muted-foreground">
-            To prevent two administrators from accidentally overwriting each
-            other's changes, the Remote Config API enforces strict{" "}
-            <strong>Optimistic Concurrency Control (OCC)</strong>:
+        <div className="space-y-4 text-xs leading-relaxed text-muted-foreground">
+          <p>
+            Configuration parameters are defined as an arbitrary JSON object. This
+            enables rich nested structures, arrays, feature switches, API endpoints,
+            and timeout thresholds.
           </p>
-
-          <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <strong className="font-semibold text-primary">
-              The expectedVersion Protocol:
-            </strong>
-            <p className="text-muted-foreground">
-              • <strong>Create Mode (expectedVersion = 0):</strong> Fails with
-              HTTP 409 if document already exists.
-              <br />•{" "}
-              <strong>
-                Update Mode (expectedVersion = currentVersion):
-              </strong>{" "}
-              The server verifies the document version hasn't changed. If
-              another admin updated it in the background, a{" "}
-              <code className="font-mono text-destructive">409 Conflict</code>{" "}
-              error prevents accidental data loss.
-              <br />• <strong>Immutable History Records:</strong> Every save
-              writes a snapshot to{" "}
-              <code className="font-mono">ConfigHistory</code>, recording the
-              exact values, version counter, and timestamp.
-            </p>
-          </div>
 
           <div className="space-y-2 rounded-lg border border-border bg-card p-3">
-            <div className="flex items-center gap-1.5 font-bold text-foreground">
-              <RotateCcw className="size-4 text-primary" />
-              <span>How 1-Click Rollback Works:</span>
-            </div>
-            <p className="text-muted-foreground">
-              When an admin clicks <strong>"Rollback to v4"</strong> in the
-              History drawer:
-              <br />
-              1. The server loads the historical snapshot from Version 4.
-              <br />
-              2. It applies those values as a brand-new current version (e.g.
-              Version 6).
-              <br />
-              3. The rollback operation is completely non-destructive and
-              auditable!
-            </p>
+            <span className="font-semibold text-foreground">
+              MongoDB Schema & Key Rules:
+            </span>
+            <ul className="list-disc pl-4 space-y-1.5">
+              <li>
+                <strong>No '$' prefixes:</strong> Keys cannot start with{" "}
+                <code className="font-mono text-primary">$</code> because MongoDB
+                reserves dollar signs for query operators.
+              </li>
+              <li>
+                <strong>No '.' dots in keys:</strong> Keys cannot contain{" "}
+                <code className="font-mono text-primary">.</code> because MongoDB uses
+                dot notation for nested field navigation. Use underscores (e.g.{" "}
+                <code className="font-mono text-primary">theme_accent_color</code>).
+              </li>
+              <li>
+                <strong>Arbitrary Nesting:</strong> Nested objects and arrays are fully
+                supported and delivered directly to the client as JSON.
+              </li>
+            </ul>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5 text-[11px]">
+            <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+            <span>
+              Use the built-in <strong>Prettify / Format</strong> button in the
+              editor to automatically indent JSON and check for syntax errors before
+              saving.
+            </span>
           </div>
         </div>
       ),
     },
-
     {
-      id: "config-vs-feature-flags",
-      title: "Remote Config vs. Feature Flags Decision Guide",
-      badge: "Architectural Decision",
-      icon: Split,
-      summary: "When to use Remote Config vs. when to create a Feature Flag",
+      id: "duplicate-workflow",
+      title: "Duplicate as New Version Workflow",
+      badge: "Release Operations",
+      icon: Copy,
+      summary: "How to safely prepare configuration for an upcoming release build",
       content: (
-        <div className="space-y-3 text-xs leading-relaxed">
-          <p className="text-muted-foreground">
-            Choosing the right system ensures clean architecture and minimal
-            overhead:
+        <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
+          <p>
+            When preparing new settings, keys, or defaults for an upcoming app
+            release, duplicate the current active tier to create a new version:
           </p>
-
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-left text-[11px]">
-              <thead className="bg-muted text-muted-foreground">
-                <tr>
-                  <th className="p-2">Criterion</th>
-                  <th className="p-2">Remote Config (config)</th>
-                  <th className="p-2">Feature Flags (features)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                <tr>
-                  <td className="p-2 font-bold">Primary Goal</td>
-                  <td className="p-2">
-                    Tuning constants, styling, timeouts, defaults
-                  </td>
-                  <td className="p-2">Binary capability gating (on/off)</td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-bold">Canary Rollout %</td>
-                  <td className="p-2 font-mono text-muted-foreground">
-                    No (All matching clients receive it)
-                  </td>
-                  <td className="p-2 font-mono font-bold text-emerald-600">
-                    Yes (0% to 100% FNV-1a rollout)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-bold">Device Allow / Deny Lists</td>
-                  <td className="p-2 font-mono text-muted-foreground">No</td>
-                  <td className="p-2 font-mono font-bold text-emerald-600">
-                    Yes (VIP testing & blacklist)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-bold">Release Channel Rings</td>
-                  <td className="p-2 font-mono text-muted-foreground">
-                    No (Global across all channels)
-                  </td>
-                  <td className="p-2 font-mono font-bold text-emerald-600">
-                    Yes (internal / beta / production)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-bold">Deep-Merge Inheritance</td>
-                  <td className="p-2 font-mono font-bold text-emerald-600">
-                    Yes (all + android / ios)
-                  </td>
-                  <td className="p-2 font-mono text-muted-foreground">
-                    No (Individual flag evaluation)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-bold">Audit History & Rollback</td>
-                  <td className="p-2 font-mono font-bold text-emerald-600">
-                    Yes (Snapshots & 1-click restore)
-                  </td>
-                  <td className="p-2 font-mono text-muted-foreground">
-                    Direct edits
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      id: "prohibited-keys-mongo",
-      title: "JSON Key Restrictions (MongoDB Safeguards)",
-      badge: "Validation Rule",
-      icon: AlertTriangle,
-      summary: "Why dots and dollar signs in key names are blocked",
-      content: (
-        <div className="space-y-3 text-xs leading-relaxed">
-          <p className="text-muted-foreground">
-            MongoDB reserves the dot (<code className="font-mono">.</code>) for
-            document path navigation and the dollar sign (
-            <code className="font-mono">$</code>) for query operators.
-          </p>
-
-          <div className="space-y-1.5 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-            <strong className="font-semibold text-destructive">
-              Key Validation Rules:
-            </strong>
-            <p className="text-muted-foreground">
-              • Keys <strong>cannot contain dots</strong> (e.g. use{" "}
-              <code className="font-mono">theme_color</code> or{" "}
-              <code className="font-mono">theme:color</code> instead of{" "}
-              <code className="font-mono">theme.color</code>).
-              <br />• Keys <strong>cannot start with $</strong> (e.g.{" "}
-              <code className="font-mono">$lookup</code>).
-              <br />
-              Central-UI validates your JSON in real-time to prevent 400 Bad
-              Request errors.
-            </p>
+          <ol className="list-decimal pl-4 space-y-2">
+            <li>
+              On the Remote Configurations list, locate the current baseline or
+              active tier.
+            </li>
+            <li>
+              Click the actions menu (<code className="font-mono text-primary">...</code>)
+              and select <strong>"Duplicate"</strong>.
+            </li>
+            <li>
+              Enter the new app binary's <strong>Minimum Build Number</strong> (e.g.
+              #12).
+            </li>
+            <li>
+              Add or modify keys in the <strong>Configuration Parameters (JSON)</strong>{" "}
+              card.
+            </li>
+            <li>
+              Click <strong>"Create Configuration"</strong> to publish the new tier.
+            </li>
+          </ol>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-amber-700 dark:text-amber-400">
+            <strong>Zero Downtime Guarantee:</strong> Older app versions already
+            in production will continue to receive their existing tier. Only devices
+            running Build #12 or higher will receive the newly configured keys.
           </div>
         </div>
       ),
     },
   ],
 
-  // 2. PLAYBOOKS (Operational Recipes)
+  // 2. STEP-BY-STEP WALKTHROUGH TOUR
+  tourSteps: [
+    {
+      id: "step-1-platform-build",
+      title: "1. Target Platform & Minimum Build",
+      subtitle: "The primary resolution key",
+      badge: "Foundations",
+      description:
+        "Choose Android or iOS and set the Minimum Build Number threshold. The database enforces a strict unique constraint on (platform, minBuildNumber).",
+      callout: {
+        type: "tip",
+        title: "Build Number Precedence",
+        text: "The backend serves the highest minBuildNumber that is less than or equal to the client's build number.",
+      },
+    },
+    {
+      id: "step-2-release-note",
+      title: "2. Release Note / Label",
+      subtitle: "Human-readable descriptor",
+      badge: "Documentation",
+      description:
+        "Provide a descriptive label (e.g. 'v1.4 AI Theme Rollout', 'v2.0 Baseline') so your team can easily identify why this configuration tier was created.",
+    },
+    {
+      id: "step-3-parameters",
+      title: "3. Configuration Parameters (JSON)",
+      subtitle: "The client configuration dictionary",
+      badge: "Payload",
+      description:
+        "Paste or edit JSON directly with syntax checking. Ensure key names do not contain periods '.' or start with '$'.",
+      callout: {
+        type: "info",
+        title: "ETag Caching",
+        text: "Saving changes immediately recalculates the SHA-256 ETag so clients detect the update on their next poll.",
+      },
+    },
+  ],
+
+  // 3. PLAYBOOKS
   playbooks: [
     {
-      id: "global-default-parameter",
-      title: "Establishing a Global Default Setting",
-      category: "Foundation",
-      badge: "Platform: All",
-      goal: "Set a baseline vibration duration of 35ms across all mobile platforms.",
+      id: "launching-new-version",
+      title: "Publishing Config for a New App Release",
+      category: "Releases",
+      goal:
+        "Ship new configuration keys without breaking older installed app versions",
       configurationSummary:
-        "namespace: 'haptics' | platform: 'all' | values: { key_vibration_ms: 35, enabled: true }",
+        "Duplicate the current tier, set minBuildNumber to the new release build number, add the new keys, and publish.",
       whyItWorks:
-        "The 'all' document serves as the foundation. Both Android and iOS clients automatically inherit these baseline keys without duplicate entry.",
+        "Clients with build numbers lower than the new tier ignore it and continue receiving their compatible tier.",
     },
-
     {
-      id: "os-hardware-tuning",
-      title: "OS Hardware Specialization",
-      category: "Platform Overrides",
-      badge: "Deep Merge",
-      goal: "iOS devices use Taptic Engine haptic intensity ('medium'), while Android uses millisecond durations (40ms).",
+      id: "hotfix-update",
+      title: "Hotfixing an Active Production Tier",
+      category: "Hotfixes",
+      goal: "Instantly update an API endpoint or flag for existing users in the wild",
       configurationSummary:
-        "all: { enabled: true } | ios: { haptic_intensity: 'medium' } | android: { vibration_ms: 40 }",
+        "Edit the existing tier for the target build range, adjust the parameter in JSON, and save changes.",
       whyItWorks:
-        "The deep-merge engine layers OS-specific overrides over the 'all' baseline. Android gets vibration_ms, iOS gets haptic_intensity, and both share enabled: true.",
-    },
-
-    {
-      id: "version-gating-settings",
-      title: "App Version Gating for New Settings",
-      category: "Crash Prevention",
-      badge: "minBuildNumber",
-      goal: "Build 50 introduces new AI temperature parameters that would crash older client builds if delivered.",
-      configurationSummary:
-        "minBuildNumber: 50 | values: { ai_engine: 'gemini-nano', temperature: 0.7 }",
-      whyItWorks:
-        "Clients with buildNumber < 50 filter out this document during evaluation, safely falling back to hardcoded defaults without encountering unknown keys.",
-    },
-
-    {
-      id: "emergency-config-rollback",
-      title: "Emergency 1-Click Configuration Rollback",
-      category: "Incident Recovery",
-      badge: "Rollback",
-      goal: "An admin accidentally set vibration duration to 5000ms, causing continuous vibration. Restore good state instantly.",
-      configurationSummary:
-        "Open History drawer → Locate last known good version (e.g. v3) → Click 'Rollback to v3'",
-      whyItWorks:
-        "The server instantly copies snapshot v3 values into a new version counter. Worldwide mobile clients refresh on their next bootstrap call.",
+        "Because the document minBuildNumber remains unchanged, all active devices in that build window receive the updated values on next poll.",
     },
   ],
 
-  // 3. TROUBLESHOOTING MATRIX
+  // 4. TROUBLESHOOTING
   troubleshooting: [
     {
-      problem: "HTTP 409: 'Version conflict: current version is X, expected Y'",
+      problem: "409 Conflict: Configuration Already Exists",
       cause:
-        "Another administrator modified and saved this config while your form was open",
+        "A configuration document for the selected platform with this exact Minimum Build Number already exists.",
       solution:
-        "Refresh the configuration editor to pull the latest changes, re-apply your edits, and save again.",
-      tag: "OCC Conflict",
+        "Check the list table to verify existing build numbers. Edit the existing record or choose a different minimum build number.",
+      tag: "Validation",
     },
     {
-      problem: "Client is not receiving new configuration keys",
-      cause: "minBuildNumber threshold is set higher than client's buildNumber",
+      problem: "Config keys cannot start with '$' or contain '.'",
+      cause:
+        "MongoDB reserves '$' for query operators and '.' for nested path navigation.",
       solution:
-        "Check the client's build number. Lower minBuildNumber or update the mobile test device.",
-      tag: "Build Gate",
+        "Use underscore naming conventions (e.g. 'search_provider' instead of 'search.provider').",
+      tag: "Validation",
     },
     {
-      problem: "Client receives old values despite admin changes",
-      cause: "HTTP 304 Caching or maxBuildNumber ceiling exceeded",
+      problem: "Client device not receiving the latest configuration values",
+      cause:
+        "The client application's installed buildNumber is strictly less than the minBuildNumber of the latest tier.",
       solution:
-        "Verify if maxBuildNumber retired the config, or restart the client app to invalidate cached ETag.",
-      tag: "Cache / ETag",
-    },
-    {
-      problem:
-        "Validation Error 400: 'Config value keys cannot start with $ or contain .'",
-      cause: "MongoDB prohibited characters in JSON key names",
-      solution:
-        "Replace dots (.) with underscores (_) or colons (:), and remove leading dollar signs ($).",
-      tag: "Key Syntax",
-    },
-    {
-      problem: "Platform override is not applying to clients",
-      cause: "Namespace spelling mismatch between 'all' and OS document",
-      solution:
-        "Ensure the namespace string is identical across all and android/ios documents (case-sensitive).",
-      tag: "Namespace Match",
+        "Verify the client's buildNumber in device logs or update the test device to a build equal to or greater than minBuildNumber.",
+      tag: "Client Resolution",
     },
   ],
 
-  // 4. QUICK REFERENCE TABLE
+  // 5. QUICK REFERENCE TABLE
   quickReferenceTable: {
-    headers: [
-      "Field Name",
-      "Type",
-      "Required?",
-      "Default",
-      "Operational Impact",
-    ],
+    headers: ["Field", "Type", "Required", "Default", "Description"],
     rows: [
       [
-        "namespace",
-        "string",
-        "YES",
-        "-",
-        "Unique category key (e.g. 'keyboard_haptics'). Immutable after creation.",
-      ],
-      [
         "platform",
-        "enum (all | android | ios)",
+        "enum ('android' | 'ios')",
         "YES",
-        "-",
-        "Defines whether config is a global baseline ('all') or OS override.",
-      ],
-      [
-        "values",
-        "object (JSON)",
-        "YES",
-        "{}",
-        "Key-value dictionary. Keys cannot start with '$' or contain '.'.",
+        "'android'",
+        "Target mobile operating system.",
       ],
       [
         "minBuildNumber",
-        "integer",
-        "No",
-        "-",
-        "Clients with buildNumber below this integer ignore this document.",
-      ],
-      [
-        "maxBuildNumber",
-        "integer",
-        "No",
-        "-",
-        "Clients with buildNumber above this integer ignore this document.",
-      ],
-      [
-        "expectedVersion",
-        "integer",
-        "No",
-        "-",
-        "Optimistic lock guard. Must match current version on updates to prevent race conditions.",
-      ],
-      [
-        "version",
-        "integer",
-        "Auto",
+        "integer (>= 1)",
+        "YES",
         "1",
-        "Monotonic counter incremented on every save and rollback snapshot.",
+        "Minimum build integer threshold. Enforced unique per platform.",
       ],
       [
-        "updatedBy",
-        "string",
-        "Auto",
-        "'admin'",
-        "Audit identity of the administrator who committed the update.",
+        "note",
+        "string (max 250)",
+        "No",
+        "''",
+        "Descriptive tag or changelog note for internal team reference.",
+      ],
+      [
+        "values",
+        "Record<string, any>",
+        "YES",
+        "{}",
+        "Arbitrary JSON payload delivered to clients. Keys cannot contain '.' or start with '$'.",
+      ],
+      [
+        "createdAt",
+        "Date (ISO-8601)",
+        "System",
+        "Now",
+        "Timestamp when the configuration document was created.",
+      ],
+      [
+        "updatedAt",
+        "Date (ISO-8601)",
+        "System",
+        "Now",
+        "Timestamp of the most recent configuration edit.",
       ],
     ],
   },
-
-  // 5. STEP-BY-STEP WALKTHROUGH TOUR
-  tourSteps: [
-    {
-      id: "step-1-namespace-platform",
-      title: "1. Namespace & Platform Selection",
-      subtitle: "Organizing your configuration hierarchy",
-      badge: "Targeting",
-      description:
-        "Select a logical namespace (e.g. 'theme_settings') and choose the target platform: 'all' for global defaults, or 'android'/'ios' for operating system specific overrides.",
-      callout: {
-        type: "tip",
-        title: "Platform Best Practice",
-        text: "Always define baseline settings on 'all' first. Only create platform-specific documents for keys that genuinely differ between OSs.",
-      },
-    },
-    {
-      id: "step-2-json-editor",
-      title: "2. Visual JSON Editor with Real-Time Validation",
-      subtitle: "Editing configuration parameters safely",
-      badge: "Values",
-      description:
-        "Use the JSON editor to configure strings, numbers, booleans, nested dictionaries, and arrays. Real-time syntax checking alerts you immediately if syntax errors or prohibited keys exist.",
-    },
-    {
-      id: "step-3-build-bounds",
-      title: "3. App Version Gating (Min & Max Build)",
-      subtitle: "Protecting older client builds from incompatible settings",
-      badge: "Safety Gates",
-      description:
-        "Set minBuildNumber when adding settings that require newer client code. This prevents older app builds from crashing due to unexpected configuration schemas.",
-    },
-    {
-      id: "step-4-history-rollback",
-      title: "4. Audit History & 1-Click Rollback",
-      subtitle: "Full traceability and instant recovery",
-      badge: "Auditing",
-      description:
-        "Every change is tracked in the History drawer. View historical versions, compare changes, and rollback immediately with one click if any setting causes unexpected client issues.",
-      callout: {
-        type: "info",
-        title: "Non-Destructive Rollback",
-        text: "Rolling back creates a new version record containing the restored values, keeping the audit trail fully intact.",
-      },
-    },
-  ],
 }
+
+export default remoteConfigHelpConfig

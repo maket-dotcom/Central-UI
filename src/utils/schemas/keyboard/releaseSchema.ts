@@ -29,7 +29,7 @@ export interface Release {
   updatedAt: string
 }
 
-export const createReleaseSchema = z.object({
+const baseReleaseSchema = z.object({
   platform: releasePlatformEnum,
   channel: releaseChannelEnum,
   version: z
@@ -59,7 +59,9 @@ export const createReleaseSchema = z.object({
   forceUpdate: z.boolean(),
   rolloutPercentage: z.number().int().min(0).max(100),
   status: releaseStatusEnum,
-}).refine(
+})
+
+export const createReleaseSchema = baseReleaseSchema.refine(
   (data) => !data.minBuildNumber || data.minBuildNumber < data.buildNumber,
   {
     message:
@@ -68,9 +70,20 @@ export const createReleaseSchema = z.object({
   }
 )
 
-export const patchReleaseSchema = createReleaseSchema
+export const patchReleaseSchema = baseReleaseSchema
   .omit({ platform: true, version: true })
   .partial()
+  .refine(
+    (data) =>
+      !data.minBuildNumber ||
+      !data.buildNumber ||
+      data.minBuildNumber < data.buildNumber,
+    {
+      message:
+        "Minimum build threshold must be strictly less than release build number",
+      path: ["minBuildNumber"],
+    }
+  )
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
   })

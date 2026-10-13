@@ -94,3 +94,10 @@ Global state is managed via `Zustand` in `src/store/`.
 - Slices are used to separate domains (e.g., `AppSlice.ts`, `AuthSlice.ts`).
 - Auth tokens and selected apps are persisted via `localStorage` directly in the slice initializers.
 - Interceptors in `src/api/*` dynamically read the latest state via `useAppStore.getState().token`.
+
+## 8. Application Module Standards (Releases, Features & Remote Config)
+To maintain consistent UX across administrative modules in `src/pages/apps/keyboard/`:
+- **Unified List View**: Header with live count badge + Operations Guide `HelpButton` + `RefreshCw` button + `New ...` action button; single-row filter bar with `Search` input and `SelectComponent` platform dropdown; table with `useTableSort` hook; Tabler platform icons (`IconBrandAndroid`, `IconBrandApple`); and actions dropdown via `MoreVerticalIcon`.
+- **Unified Editor/Form View**: Sub-header with `<Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>` back navigation; numbered `<Card className="border border-border shadow-sm">` sections with primary-colored Lucide icons; full-width responsive action footer (Primary submit button with `Loader` spinner + Outline `Cancel` button); and `getFirstFormErrorMessage` error toast handling on submit failure.
+- **Remote Configuration Architecture**: Uses a simplified, version-tiered model. Documents are keyed uniquely by `(platform, minBuildNumber)`. Payloads are arbitrary JSON dictionaries managed via `JsonEditorComponent` (with format, copy, syntax error validation, and MongoDB key constraints).
+

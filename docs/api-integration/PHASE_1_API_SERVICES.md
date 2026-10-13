@@ -42,13 +42,12 @@ export const keyboardApiConfig: ApiEndpoint[] = [
   { name: "upsertTester", path: "/api/v1/admin/testers/{deviceId}", hasPathParams: true },
   { name: "deleteTester", path: "/api/v1/admin/testers/{deviceId}", hasPathParams: true },
 
-  // Remote Config endpoints
-  { name: "getConfigs", path: "/api/v1/admin/configs/list" },
-  { name: "getConfig", path: "/api/v1/admin/configs/{namespace}/{platform}", hasPathParams: true },
-  { name: "putConfig", path: "/api/v1/admin/configs/{namespace}/{platform}", hasPathParams: true },
-  { name: "deleteConfig", path: "/api/v1/admin/configs/{namespace}/{platform}", hasPathParams: true },
-  { name: "getConfigHistory", path: "/api/v1/admin/configs/{namespace}/{platform}/history", hasPathParams: true },
-  { name: "rollbackConfig", path: "/api/v1/admin/configs/{namespace}/{platform}/rollback", hasPathParams: true },
+  // Remote Config endpoints (Version-Tiered)
+  { name: "getRemoteConfigs", path: "/api/v1/admin/remote-configs/list" },
+  { name: "getRemoteConfigById", path: "/api/v1/admin/remote-configs/{id}", hasPathParams: true },
+  { name: "createRemoteConfig", path: "/api/v1/admin/remote-configs" },
+  { name: "updateRemoteConfig", path: "/api/v1/admin/remote-configs/{id}", hasPathParams: true },
+  { name: "deleteRemoteConfig", path: "/api/v1/admin/remote-configs/{id}", hasPathParams: true },
 
   // Release Management endpoints
   { name: "getReleases", path: "/api/v1/admin/releases/list" },
@@ -112,73 +111,39 @@ export const deleteTester = async ({ deviceId }: { deviceId: string }) => {
 import { createApiClient } from "@/api/apiClient"
 import { keyboardApiConfig } from "@/api/config/keyboardApiConfig"
 import appInstance from "@/api/appInstance"
-import type { PutConfigInputs, RollbackConfigInputs } from "@/utils/schemas/keyboard/remoteConfigSchema"
+import type {
+  CreateRemoteConfigInputs,
+  UpdateRemoteConfigInputs,
+  ConfigPlatform,
+} from "@/utils/schemas/keyboard/remoteConfigSchema"
 
 const api = createApiClient(keyboardApiConfig, appInstance)
 
-export const getConfigs = async () => {
-  const { data } = await api.get("getConfigs")
+export const getRemoteConfigs = async (params?: { platform?: ConfigPlatform }) => {
+  const { data } = await api.get("getRemoteConfigs", params)
   return data
 }
 
-export const getConfig = async ({
-  namespace,
-  platform,
-}: {
-  namespace: string
-  platform: string
-}) => {
-  const { data } = await api.get("getConfig", undefined, undefined, { namespace, platform })
+export const getRemoteConfigById = async (id: string) => {
+  const { data } = await api.get("getRemoteConfigById", undefined, undefined, { id })
   return data
 }
 
-export const putConfig = async ({
-  namespace,
-  platform,
-  body,
-}: {
-  namespace: string
-  platform: string
-  body: Omit<PutConfigInputs, "namespace" | "platform">
-}) => {
-  const { data } = await api.put("putConfig", body, undefined, { namespace, platform })
+export const createRemoteConfig = async (body: CreateRemoteConfigInputs) => {
+  const { data } = await api.post("createRemoteConfig", body)
   return data
 }
 
-export const deleteConfig = async ({
-  namespace,
-  platform,
-}: {
-  namespace: string
-  platform: string
-}) => {
-  const { data } = await api.del("deleteConfig", undefined, { namespace, platform })
+export const updateRemoteConfig = async (
+  id: string,
+  body: UpdateRemoteConfigInputs
+) => {
+  const { data } = await api.patch("updateRemoteConfig", body, undefined, { id })
   return data
 }
 
-export const getConfigHistory = async ({
-  namespace,
-  platform,
-  params,
-}: {
-  namespace: string
-  platform: string
-  params?: { limit?: number }
-}) => {
-  const { data } = await api.get("getConfigHistory", params, undefined, { namespace, platform })
-  return data
-}
-
-export const rollbackConfig = async ({
-  namespace,
-  platform,
-  body,
-}: {
-  namespace: string
-  platform: string
-  body: RollbackConfigInputs
-}) => {
-  const { data } = await api.post("rollbackConfig", body, undefined, { namespace, platform })
+export const deleteRemoteConfig = async (id: string) => {
+  const { data } = await api.del("deleteRemoteConfig", undefined, { id })
   return data
 }
 ```

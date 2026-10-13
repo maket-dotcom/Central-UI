@@ -13,7 +13,7 @@
 This project integrates four critical release-engineering and runtime-control subsystems from `iKeyboard-backend` into the `Central-UI` administration panel for the **Keyboard** application:
 
 1. **Tester Device Management (`/api/v1/admin/testers/*`)**: Enrollment and channel assignment (`internal` / `beta`) of hardware test devices by persistent `deviceId`.
-2. **Remote Configuration Engine (`/api/v1/admin/configs/*`)**: Namespace-driven dynamic app configuration with platform inheritance (`all` &rarr; `android` / `ios` overrides), build gating, optimistic locking (`expectedVersion`), and 1-click rollback history.
+2. **Remote Configuration Engine (`/api/v1/admin/remote-configs/*`)**: Version-tiered runtime configurations segregated by platform (`android` / `ios`) and minimum build number (`minBuildNumber`), with rich JSON parameter editing and O(1) indexed lookup.
 3. **Release & Update Delivery (`/api/v1/admin/releases/*`)**: In-app build distribution across platforms and channels, with integer build gating, gradual rollouts (0–100%), and force-update cascade rules.
 4. **Feature Flags Engine (`/api/v1/admin/features/*`)**: 7-gate runtime toggle pipeline with master switches, allow/deny device lists, platform/channel filters, platform-segregated min/max build limits, and deterministic FNV-1a rollout bucketing.
 
@@ -25,13 +25,13 @@ Based on architectural alignment, the following design decisions are locked:
 
 | Design Dimension | Selected Strategy | Rationale & Implementation Details |
 | :--- | :--- | :--- |
-| **View / Navigation Paradigm** | **Hybrid Model (Option C)** | - **Testers**: Modal dialog (lightweight 3-field CRUD stays on table).<br/>- **Releases, Features, Remote Config**: Dedicated route pages (`/create`, `/update/:id` or `/edit/:namespace/:platform`) matching existing Campaign architecture. |
-| **Remote Config View** | **Grouped Cards by Namespace (Option A)** | Namespace cards (e.g. `keyboard`, `theme`, `ai`) containing sub-tabs for `All (Baseline)`, `Android (Override)`, and `iOS (Override)` for clear hierarchical inheritance. |
-| **JSON Payload / Config Editor** | **Dedicated Code Editor Component** | Custom interactive JSON Editor component with syntax validation, formatting/beautification, line numbers, and error callouts. |
+| **View / Navigation Paradigm** | **Hybrid Model (Option C)** | - **Testers**: Modal dialog (lightweight 3-field CRUD stays on table).<br/>- **Releases, Features, Remote Config**: Dedicated route pages (`/create`, `/edit/:id`) matching unified app architecture. |
+| **Remote Config View** | **Harmonized Tier List (Table + Filters)** | Unified table view sharing exact layout with Releases & Features: search, platform filter dropdown (`All`, `Android`, `iOS`), sortable columns, active build window indicators, and duplicate version workflow. |
+| **JSON Payload / Config Editor** | **Dedicated Code Editor Component** | Standard `JsonEditorComponent` with formatting/prettify, syntax validation, copy actions, and MongoDB key constraints (no `.` and cannot start with `$`). |
 | **Feature Flag Keys** | **Strict Lowercase Snake-Case** | Enforce `/^[a-z0-9_-]+$/` on UI validation for clean cross-platform consistency. |
-| **Table Sorting** | **Interactive Client-Side Column Sorting** | All table views provide sorting (e.g. Releases sortable by `buildNumber` or `createdAt`; Features sortable by `key` or `createdAt`). |
-| **API Client Method Signatures** | **Sequenced Parameter Passing** | Calling `apiClient.ts` methods in strict parameter order: `del(name, undefined, pathParams)`, `put(name, body, undefined, pathParams)`, `get(name, params, undefined, pathParams)`. |
-| **Cache Invalidation** | **Strict Query Key Hierarchies** | Granular cache keys for targeted invalidation (e.g. `["remoteConfig"]`, `["remoteConfig", namespace, platform]`, `["features"]`, `["releases"]`, `["testers"]`). |
+| **Table Sorting** | **Interactive Client-Side Column Sorting** | All table views provide sorting via `useTableSort` hook. |
+| **API Client Method Signatures** | **Sequenced Parameter Passing** | Calling `apiClient.ts` methods in strict parameter order: `del(name, undefined, pathParams)`, `patch(name, body, undefined, pathParams)`, `get(name, params, undefined, pathParams)`. |
+| **Cache Invalidation** | **Strict Query Key Hierarchies** | Granular cache keys for targeted invalidation (e.g. `["remoteConfigs"]`, `["remoteConfig", id]`, `["features"]`, `["releases"]`, `["testers"]`). |
 
 ---
 
@@ -43,20 +43,20 @@ Based on architectural alignment, the following design decisions are locked:
 │                                                                                 │
 │  [ Pages & Views ]                                                              │
 │  ├── Testers Page (Table + Modal Dialog)                                        │
-│  ├── Remote Config Page (Namespace Cards + Tab Overrides + History Drawer)       │
+│  ├── Remote Config Page (Harmonized Table + 3-Card JSON Editor)                 │
 │  ├── Releases Page (Filterable Table + Dedicated Create/Update Pages)           │
 │  └── Feature Flags Page (Interactive Table + Dedicated Create/Update Pages)     │
 │                             │                                                   │
 │                             ▼                                                   │
 │  [ TanStack Query Layer (src/query/keyboard/*) ]                                │
 │  ├── useTester.ts          (useGetTesters, useUpsertTester, useDeleteTester)    │
-│  ├── useRemoteConfig.ts    (useGetConfigs, usePutConfig, useRollbackConfig)     │
+│  ├── useRemoteConfig.ts    (useGetRemoteConfigs, useGetRemoteConfig, etc.)      │
 │  ├── useRelease.ts         (useGetReleases, useCreateRelease, useUpdateRelease) │
 │  └── useFeature.ts         (useGetFeatures, useCreateFeature, useUpdateFeature) │
 │                             │                                                   │
 │                             ▼                                                   │
 │  [ Service Layer (src/services/keyboard/*) ]                                    │
-│  Accepts single destructured object payload: { body, params, pathParams }        │
+│  Accepts structured payloads and delegates to apiClient                          │
 │                             │                                                   │
 │                             ▼                                                   │
 │  [ Axios apiClient + appInstance (src/api/*) ]                                  │
@@ -67,7 +67,7 @@ Based on architectural alignment, the following design decisions are locked:
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              iKeyboard-backend                                  │
 │  ├── /api/v1/admin/testers/*       (Tester Device Registry)                     │
-│  ├── /api/v1/admin/configs/*       (Remote Config & Version Snapshots)          │
+│  ├── /api/v1/admin/remote-configs/* (Version-Tiered Remote Configurations)      │
 │  ├── /api/v1/admin/releases/*      (Mobile In-App Update Engine)                │
 │  └── /api/v1/admin/features/*      (7-Gate Feature Flag Pipeline)               │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -84,7 +84,7 @@ Based on architectural alignment, the following design decisions are locked:
 | **3** | [Phase 3: React Query Hooks Layer](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_3_QUERY_HOOKS.md) | Hooks with toast notifications and cache invalidation in `query/keyboard/` | 🟢 Completed |
 | **4** | [Phase 4: Shared & Input Components](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_4_SHARED_COMPONENTS.md) | Interactive JSON code editor component and table column sorting utilities | 🟢 Completed |
 | **5** | [Phase 5: Tester Device Management UI](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_5_TESTERS_UI.md) | Tester table, copy device ID, channel badges, modal dialog CRUD | 🟢 Completed |
-| **6** | [Phase 6: Remote Configuration UI](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_6_REMOTE_CONFIG_UI.md) | Namespace cards, platform tabs, dedicated editor page, history drawer & rollback | 🟢 Completed |
+| **6** | [Phase 6: Remote Configuration UI](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_6_REMOTE_CONFIG_UI.md) | Harmonized version tier list, platform filters, dedicated 3-card JSON editor, duplicate workflow | 🟢 Completed |
 | **7** | [Phase 7: Release Management UI](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_7_RELEASES_UI.md) | Release table with filters, dedicated create/update routes, rollout progress bar | 🟢 Completed |
 | **8** | [Phase 8: Feature Flags UI](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_8_FEATURE_FLAGS_UI.md) | Flags table with inline master toggle, dedicated create/update routes, 7-gate inputs | 🟢 Completed |
 | **9** | [Phase 9: Navigation & Routing Registration](file:///d:/project/central/Central-UI/docs/api-integration/PHASE_9_NAVIGATION_ROUTING.md) | Dynamic sidebar configuration and React Router route trees | 🟢 Completed |

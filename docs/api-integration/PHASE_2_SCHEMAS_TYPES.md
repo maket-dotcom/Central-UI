@@ -54,32 +54,18 @@ export type UpsertTesterInputs = z.infer<typeof upsertTesterSchema>
 ```typescript
 import { z } from "zod"
 
-export const configPlatformEnum = z.enum(["all", "android", "ios"])
+export const configPlatformEnum = z.enum(["android", "ios"])
 export type ConfigPlatform = z.infer<typeof configPlatformEnum>
 
 export interface RemoteConfigDoc {
   _id: string
-  namespace: string
   platform: ConfigPlatform
+  minBuildNumber: number
+  note?: string
   values: Record<string, unknown>
-  minBuildNumber?: number
-  maxBuildNumber?: number
-  version: number
   updatedBy: string
   createdAt: string
   updatedAt: string
-}
-
-export interface ConfigHistoryDoc {
-  _id: string
-  namespace: string
-  platform: ConfigPlatform
-  version: number
-  values: Record<string, unknown>
-  minBuildNumber?: number
-  maxBuildNumber?: number
-  updatedBy: string
-  createdAt: string
 }
 
 const validateConfigKeys = (obj: unknown): boolean => {
@@ -96,42 +82,39 @@ const validateConfigKeys = (obj: unknown): boolean => {
   return true
 }
 
-export const putConfigSchema = z.object({
-  namespace: z
-    .string()
-    .trim()
-    .min(1, "Namespace is required")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Namespace must be alphanumeric, hyphens, or underscores"),
+export const createRemoteConfigSchema = z.object({
   platform: configPlatformEnum,
+  minBuildNumber: z
+    .number()
+    .int("Build number must be an integer")
+    .positive("Minimum build number must be >= 1"),
+  note: z.string().trim().max(250).optional(),
   values: z
     .record(z.string(), z.unknown(), {
-      required_error: "Values object is required",
+      message: "Values object is required",
     })
     .refine((val) => validateConfigKeys(val), {
       message: 'Config keys cannot start with "$" or contain "."',
     }),
-  minBuildNumber: z.coerce.number().int().positive("Min build number must be positive").nullable().optional(),
-  maxBuildNumber: z.coerce.number().int().positive("Max build number must be positive").nullable().optional(),
-  expectedVersion: z.number().int().min(0).optional(),
-}).refine(
-  (data) => {
-    if (data.minBuildNumber != null && data.maxBuildNumber != null) {
-      return data.minBuildNumber <= data.maxBuildNumber
-    }
-    return true
-  },
-  {
-    message: "Minimum build number must be less than or equal to maximum build number",
-    path: ["minBuildNumber"],
-  }
-)
-
-export const rollbackConfigSchema = z.object({
-  version: z.number().int().positive("Version must be a positive integer"),
 })
 
-export type PutConfigInputs = z.infer<typeof putConfigSchema>
-export type RollbackConfigInputs = z.infer<typeof rollbackConfigSchema>
+export const updateRemoteConfigSchema = z.object({
+  minBuildNumber: z
+    .number()
+    .int("Build number must be an integer")
+    .positive("Minimum build number must be >= 1")
+    .optional(),
+  note: z.string().trim().max(250).optional(),
+  values: z
+    .record(z.string(), z.unknown())
+    .refine((val) => validateConfigKeys(val), {
+      message: 'Config keys cannot start with "$" or contain "."',
+    })
+    .optional(),
+})
+
+export type CreateRemoteConfigInputs = z.infer<typeof createRemoteConfigSchema>
+export type UpdateRemoteConfigInputs = z.infer<typeof updateRemoteConfigSchema>
 ```
 
 ---

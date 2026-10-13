@@ -1,192 +1,140 @@
-import { useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Sliders, Layers, FileCode2, AlertTriangle } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card"
 import SelectComponent from "@/components/inputComponents/select-component"
+import JsonEditorComponent from "@/components/inputComponents/json-editor-component"
 import Loader from "@/components/loader"
-import { JsonEditorComponent } from "@/components/inputComponents/json-editor-component"
 import { toast } from "sonner"
 import { getFirstFormErrorMessage } from "@/utils/formUtils"
+import { HelpButton } from "@/components/helpTour"
+import { RemoteConfigHelpDrawer } from "../components/remote-config-help-drawer"
 import {
-  useGetConfig,
-  usePutConfig,
+  useGetRemoteConfig,
+  useCreateRemoteConfig,
+  useUpdateRemoteConfig,
 } from "@/query/keyboard/useRemoteConfig"
 import {
-  putConfigSchema,
-  type PutConfigInputs,
-  type ConfigPlatform,
+  createRemoteConfigSchema,
+  type CreateRemoteConfigInputs,
+  type UpdateRemoteConfigInputs,
 } from "@/utils/schemas/keyboard/remoteConfigSchema"
+import { ArrowLeft, Sliders, FileText, FileCode2, Copy } from "lucide-react"
 
 interface RemoteConfigEditorProps {
   isCreate?: boolean
 }
 
-export default function RemoteConfigEditor({
-  isCreate: isCreateProp,
-}: RemoteConfigEditorProps = {}) {
+export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
+  isCreate = false,
+}) => {
   const navigate = useNavigate()
-  const { namespace: routeNamespace, platform: routePlatform } = useParams<{
-    namespace?: string
-    platform?: ConfigPlatform
-  }>()
+  const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
+  const cloneFromId = searchParams.get("cloneFrom")
+  const [helpOpen, setHelpOpen] = useState(false)
 
-  const isEditing = !isCreateProp && !!(routeNamespace && routePlatform)
-  const isCreate = !isEditing
+  // API Queries
+  const { data: existingDocResponse, isLoading: isLoadingExisting } =
+    useGetRemoteConfig(id)
+  const { data: cloneSourceResponse, isLoading: isLoadingClone } =
+    useGetRemoteConfig(cloneFromId ?? undefined)
 
-  const defaultNamespace = searchParams.get("namespace") || ""
-  const defaultPlatform = (searchParams.get("platform") as ConfigPlatform) || "all"
+  const existingConfig = existingDocResponse?.data
+  const cloneSourceConfig = cloneSourceResponse?.data
 
-  const { data: configResp, isLoading: isConfigLoading, isError } = useGetConfig({
-    namespace: routeNamespace || "",
-    platform: routePlatform || "all",
-  })
-  const putConfigMutation = usePutConfig()
+  const createMutation = useCreateRemoteConfig()
+  const updateMutation = useUpdateRemoteConfig()
 
-  const currentConfig = configResp?.data
-
+  // Form setup
   const {
     register,
-    handleSubmit,
     control,
+    handleSubmit,
     setValue,
     reset,
     formState: { errors },
-  } = useForm<PutConfigInputs>({
-    resolver: zodResolver(putConfigSchema),
+  } = useForm<CreateRemoteConfigInputs>({
+    resolver: zodResolver(createRemoteConfigSchema),
     defaultValues: {
-      namespace: defaultNamespace,
-      platform: defaultPlatform,
+      platform: "android",
+      minBuildNumber: 1,
+      note: "",
       values: {},
-      expectedVersion: undefined,
     },
   })
 
-  // Hydrate form values
+  const currentValues = useWatch({ control, name: "values" }) || {}
+
+  // Hydrate on Edit or Duplicate
   useEffect(() => {
-    if (isEditing && currentConfig) {
+    if (!isCreate && existingConfig) {
       reset({
-        namespace: currentConfig.namespace,
-        platform: currentConfig.platform,
-        values: currentConfig.values || {},
-        minBuildNumber: currentConfig.minBuildNumber,
-        maxBuildNumber: currentConfig.maxBuildNumber,
+        platform: existingConfig.platform as "android" | "ios",
+        minBuildNumber: existingConfig.minBuildNumber,
+        note: existingConfig.note || "",
+        values: existingConfig.values || {},
       })
-    } else if (isCreate) {
-      setValue("namespace", defaultNamespace)
-      setValue("platform", defaultPlatform)
+    } else if (isCreate && cloneSourceConfig) {
+      reset({
+        platform: cloneSourceConfig.platform as "android" | "ios",
+        minBuildNumber: cloneSourceConfig.minBuildNumber + 1,
+        note: `Clone of Build #${cloneSourceConfig.minBuildNumber}`,
+        values: cloneSourceConfig.values || {},
+      })
     }
-  }, [
-    isEditing,
-    currentConfig,
-    isCreate,
-    defaultNamespace,
-    defaultPlatform,
-    reset,
-    setValue,
-  ])
+  }, [isCreate, existingConfig, cloneSourceConfig, reset])
 
-  const watchMinBuild = useWatch({ control, name: "minBuildNumber" })
-  const watchMaxBuild = useWatch({ control, name: "maxBuildNumber" })
-
-  const onSubmit = (formData: PutConfigInputs) => {
-    if (
-      formData.minBuildNumber != null &&
-      formData.maxBuildNumber != null &&
-      formData.minBuildNumber > formData.maxBuildNumber
-    ) {
-      toast.error(
-        `Minimum build number (${formData.minBuildNumber}) must be less than or equal to maximum build number (${formData.maxBuildNumber})`
-      )
-      return
-    }
-
-    const expectedVersion = isEditing ? currentConfig?.version : 0
-
-    putConfigMutation.mutate(
-      {
-        namespace: formData.namespace,
-        platform: formData.platform,
-        body: {
-          values: formData.values,
-          minBuildNumber:
-            formData.minBuildNumber !== undefined
-              ? formData.minBuildNumber
-              : isEditing
-                ? null
-                : undefined,
-          maxBuildNumber:
-            formData.maxBuildNumber !== undefined
-              ? formData.maxBuildNumber
-              : isEditing
-                ? null
-                : undefined,
-          expectedVersion,
-        },
-      },
-      {
-        onSuccess: () => {
-          navigate("/keyboard/remote-config/list")
-        },
+  const onSubmit = (formData: CreateRemoteConfigInputs) => {
+    if (isCreate) {
+      createMutation.mutate(formData, {
+        onSuccess: () => navigate("/keyboard/remote-config/list"),
+      })
+    } else if (id) {
+      const updatePayload: UpdateRemoteConfigInputs = {
+        minBuildNumber: formData.minBuildNumber,
+        note: formData.note,
+        values: formData.values,
       }
-    )
+      updateMutation.mutate(
+        { id, body: updatePayload },
+        {
+          onSuccess: () => navigate("/keyboard/remote-config/list"),
+        }
+      )
+    }
   }
 
   const handleCancel = () => {
     navigate("/keyboard/remote-config/list")
   }
 
-  const valuesData = useWatch({ control, name: "values" }) || {}
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isInitialLoading =
+    (!isCreate && isLoadingExisting) || (Boolean(cloneFromId) && isLoadingClone)
 
-  if (isEditing && isConfigLoading) {
+  if (isInitialLoading) {
     return (
-      <div className="flex min-h-100 flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="flex min-h-[50vh] flex-1 items-center justify-center">
         <Loader size={32} />
-        <p className="text-sm text-muted-foreground">
-          Loading configuration document...
-        </p>
-      </div>
-    )
-  }
-
-  if (isEditing && (isError || !currentConfig)) {
-    return (
-      <div className="flex flex-1 flex-col gap-6 w-full">
-        <div className="overflow-hidden rounded-xl border border-destructive/30 bg-destructive/10 p-8 text-center">
-          <h2 className="text-base font-semibold text-destructive">
-            Configuration Document Not Found
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The configuration for namespace &ldquo;{routeNamespace}&rdquo; on platform &ldquo;{routePlatform}&rdquo; does not exist or has been removed.
-          </p>
-          <Button
-            onClick={handleCancel}
-            variant="outline"
-            size="sm"
-            className="mt-4 cursor-pointer"
-          >
-            Back to Remote Configurations
-          </Button>
-        </div>
       </div>
     )
   }
 
   return (
     <div className="flex flex-1 flex-col gap-6 w-full">
-      {/* Header with back navigation */}
+      {/* Header with back navigation and help */}
       <div className="flex items-center gap-4">
         <Button
           type="button"
@@ -200,25 +148,49 @@ export default function RemoteConfigEditor({
         <div className="flex cursor-default flex-col gap-1 text-left">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">
-              {isEditing
-                ? "Edit Configuration"
-                : "New Configuration Document"}
+              {isCreate
+                ? cloneFromId
+                  ? "Duplicate as New Version"
+                  : "New Remote Configuration"
+                : "Edit Remote Configuration"}
             </h1>
-            {isEditing && currentConfig && (
-              <Badge variant="secondary" className="font-mono text-xs">
-                v{currentConfig.version}
+            {!isCreate && existingConfig && (
+              <Badge variant="outline" className="font-mono text-xs capitalize">
+                {existingConfig.platform} • Build #{existingConfig.minBuildNumber}
               </Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {isEditing
-              ? `Publish changes for namespace "${routeNamespace}" on platform "${routePlatform}"`
-              : "Create a new baseline configuration or platform-specific override"}
+            {isCreate
+              ? "Configure runtime parameters delivered to mobile devices by platform and minimum build number."
+              : `Updating configuration tier for ${existingConfig?.platform} (Build #${existingConfig?.minBuildNumber})`}
           </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <HelpButton
+            onClick={() => setHelpOpen(true)}
+            label="Configuration Guide"
+          />
         </div>
       </div>
 
+      {/* Clone Banner (if duplicating) */}
+      {isCreate && cloneFromId && cloneSourceConfig && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-primary">
+          <Copy className="h-4 w-4 shrink-0" />
+          <div className="flex-1">
+            <strong>
+              Duplicating from Build #{cloneSourceConfig.minBuildNumber} (
+              {cloneSourceConfig.platform}).
+            </strong>{" "}
+            All configuration parameters have been pre-filled. Enter the new
+            target build number and adjust values as needed.
+          </div>
+        </div>
+      )}
+
       <form
+        id="remote-config-form"
         onSubmit={handleSubmit(onSubmit, (formErrors) => {
           const errorMsg = getFirstFormErrorMessage(formErrors)
           if (errorMsg) {
@@ -227,102 +199,64 @@ export default function RemoteConfigEditor({
         })}
         className="flex flex-col gap-6"
       >
-        {/* 1. Configuration Scope */}
+        {/* 1. Target Scope & Build Threshold */}
         <Card className="border border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Sliders className="h-4 w-4 text-primary" />
               <CardTitle className="text-base font-semibold">
-                1. Configuration Scope
+                1. Target Platform & Minimum Build
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Namespace identifier and targeted device operating system
+              Platform identity and minimum required app build number threshold
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Namespace */}
-              <div className="space-y-2">
-                <Label htmlFor="namespace">Namespace *</Label>
-                <Input
-                  id="namespace"
-                  placeholder="e.g. keyboard, theme, ai_model"
-                  disabled={isEditing || putConfigMutation.isPending}
-                  {...register("namespace")}
-                />
-                {errors.namespace && (
-                  <p className="text-xs text-destructive">
-                    {errors.namespace.message}
-                  </p>
-                )}
-                {isEditing && (
-                  <p className="text-xs text-muted-foreground">
-                    Namespace cannot be changed once created.
-                  </p>
-                )}
-              </div>
-
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Platform */}
               <div className="space-y-2">
-                <Label htmlFor="platform">Target Platform *</Label>
-                <Controller
-                  name="platform"
-                  control={control}
-                  render={({ field }) => (
-                    <SelectComponent
-                      id="platform"
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Select platform"
-                      disabled={isEditing || putConfigMutation.isPending}
-                      data={[
-                        { name: "All (Baseline Document)", value: "all" },
-                        { name: "Android (Platform Override)", value: "android" },
-                        { name: "iOS (Platform Override)", value: "ios" },
-                      ]}
-                      className="w-full"
-                    />
-                  )}
-                />
+                <Label htmlFor="platform">Platform *</Label>
+                {isCreate ? (
+                  <Controller
+                    name="platform"
+                    control={control}
+                    render={({ field }) => (
+                      <SelectComponent
+                        id="platform"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Select platform"
+                        disabled={isPending}
+                        data={[
+                          { name: "Android", value: "android" },
+                          { name: "iOS", value: "ios" },
+                        ]}
+                      />
+                    )}
+                  />
+                ) : (
+                  <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-xs capitalize text-muted-foreground">
+                    {existingConfig?.platform} (Platform scope is immutable for
+                    existing records)
+                  </div>
+                )}
                 {errors.platform && (
                   <p className="text-xs text-destructive">
                     {errors.platform.message}
                   </p>
                 )}
-                {isEditing && (
-                  <p className="text-xs text-muted-foreground">
-                    Platform scope is immutable for existing records.
-                  </p>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* 2. Build Version Constraints */}
-        <Card className="border border-border shadow-sm">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" />
-              <CardTitle className="text-base font-semibold">
-                2. Build Version Constraints (Optional)
-              </CardTitle>
-            </div>
-            <CardDescription className="text-xs">
-              Limit this configuration document to specific client build number ranges
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Minimum Build Number */}
               <div className="space-y-2">
-                <Label htmlFor="minBuildNumber">Minimum Build Number</Label>
+                <Label htmlFor="minBuildNumber">Minimum Build Number *</Label>
                 <Input
                   id="minBuildNumber"
                   type="number"
                   min={1}
-                  placeholder="e.g. 1"
-                  disabled={putConfigMutation.isPending}
+                  placeholder="e.g. 1, 10, 25"
+                  disabled={isPending}
                   {...register("minBuildNumber", {
                     setValueAs: (v) =>
                       v === "" || isNaN(v) ? undefined : Number(v),
@@ -334,101 +268,85 @@ export default function RemoteConfigEditor({
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Builds below this number will not receive this configuration document.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maxBuildNumber">Maximum Build Number</Label>
-                <Input
-                  id="maxBuildNumber"
-                  type="number"
-                  min={1}
-                  placeholder="e.g. 50"
-                  disabled={putConfigMutation.isPending}
-                  {...register("maxBuildNumber", {
-                    setValueAs: (v) =>
-                      v === "" || isNaN(v) ? undefined : Number(v),
-                  })}
-                />
-                {errors.maxBuildNumber && (
-                  <p className="text-xs text-destructive">
-                    {errors.maxBuildNumber.message}
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Builds above this number will not receive this configuration document.
+                  Whole integer build number (e.g. 10). Devices running this
+                  build or higher will receive this payload.
                 </p>
               </div>
             </div>
-
-            {watchMinBuild != null &&
-              watchMaxBuild != null &&
-              watchMinBuild > watchMaxBuild && (
-                <div className="mt-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 text-xs font-medium text-destructive">
-                  <AlertTriangle className="size-4 shrink-0" />
-                  <span>
-                    <strong>Invalid Build Range:</strong> Minimum build number (
-                    {watchMinBuild}) cannot exceed maximum build number (
-                    {watchMaxBuild}). No client could ever match this configuration.
-                  </span>
-                </div>
-              )}
           </CardContent>
         </Card>
 
-        {/* 3. Configuration Values (JSON) */}
+        {/* 2. Release Note / Label */}
+        <Card className="border border-border shadow-sm">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <CardTitle className="text-base font-semibold">
+                2. Release Note / Label
+              </CardTitle>
+            </div>
+            <CardDescription className="text-xs">
+              Human-readable descriptor to identify this version tier in the admin
+              list
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Input
+              id="note"
+              placeholder="e.g. v1.2 Release with AI Toolbar, Keyboard v2.0 baseline"
+              disabled={isPending}
+              {...register("note")}
+            />
+            {errors.note && (
+              <p className="mt-1 text-xs text-destructive">
+                {errors.note.message}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 3. Configuration Parameters (JSON) */}
         <Card className="border border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <FileCode2 className="h-4 w-4 text-primary" />
               <CardTitle className="text-base font-semibold">
-                3. Configuration Values (JSON)
+                3. Configuration Parameters (JSON)
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Key-value configuration dictionary served to devices. Keys cannot start with "$" or contain ".".
+              Key-value configuration dictionary served to devices. Keys cannot
+              start with "$" or contain ".".
             </CardDescription>
           </CardHeader>
           <CardContent>
             <JsonEditorComponent
               id="values-editor"
               label="JSON Values Object"
-              value={valuesData}
+              value={currentValues}
               onChange={(parsedVal: Record<string, unknown>) => {
                 setValue("values", parsedVal, { shouldValidate: true })
               }}
-              disabled={putConfigMutation.isPending}
+              disabled={isPending}
               error={
-                errors.values?.message ? String(errors.values.message) : undefined
+                errors.values && typeof errors.values.message === "string"
+                  ? errors.values.message
+                  : undefined
               }
-              minHeight="280px"
+              minHeight="320px"
             />
           </CardContent>
         </Card>
-
-        {/* Optimistic Locking Info */}
-        {isEditing && currentConfig && (
-          <div className="flex items-center justify-between rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-            <span>
-              Optimistic concurrency lock active: Save will verify current
-              version is <strong>v{currentConfig.version}</strong>.
-            </span>
-            <span className="font-mono text-xs">
-              Last updated: {new Date(currentConfig.updatedAt).toLocaleString()}
-            </span>
-          </div>
-        )}
 
         {/* Bottom Action Bar */}
         <div className="flex w-full flex-col gap-3 pt-2 sm:flex-row">
           <Button
             type="submit"
             className="w-full flex-1 cursor-pointer sm:w-auto"
-            disabled={putConfigMutation.isPending}
+            disabled={isPending}
           >
-            {putConfigMutation.isPending && <Loader />}
-            {isEditing ? "Publish Changes" : "Publish Config"}
+            {isPending && <Loader />}
+            {isCreate ? "Create Configuration" : "Save Changes"}
           </Button>
 
           <Button
@@ -436,11 +354,17 @@ export default function RemoteConfigEditor({
             variant="outline"
             className="w-full flex-1 cursor-pointer sm:w-auto"
             onClick={handleCancel}
+            disabled={isPending}
           >
             Cancel
           </Button>
         </div>
       </form>
+
+      {/* Operations Guide Bottom Drawer */}
+      <RemoteConfigHelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   )
 }
+
+export default RemoteConfigEditor

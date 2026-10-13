@@ -1,3 +1,4 @@
+import React from "react"
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { useDeleteConfig } from "@/query/keyboard/useRemoteConfig"
+import { useDeleteRemoteConfig } from "@/query/keyboard/useRemoteConfig"
 import type { RemoteConfigDoc } from "@/utils/schemas/keyboard/remoteConfigSchema"
 
 interface DeleteConfigDialogProps {
@@ -21,32 +22,26 @@ export const DeleteConfigDialog: React.FC<DeleteConfigDialogProps> = ({
   onOpenChange,
   config,
 }) => {
-  const deleteMutation = useDeleteConfig()
+  const deleteMutation = useDeleteRemoteConfig()
 
   if (!config) return null
 
   const handleDelete = () => {
-    deleteMutation.mutate(
-      {
-        namespace: config.namespace,
-        platform: config.platform,
-      },
-      {
-        onSuccess: () => onOpenChange(false),
-      }
-    )
+    deleteMutation.mutate(config._id, {
+      onSuccess: () => onOpenChange(false),
+    })
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Configuration Document</DialogTitle>
+          <DialogTitle>Delete Remote Configuration</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the{" "}
-            <strong>{config.platform}</strong> configuration for namespace{" "}
-            <strong>{config.namespace}</strong>? Clients on this platform will
-            fall back to baseline settings or default configurations.
+            Are you sure you want to delete the configuration document for{" "}
+            <strong className="capitalize">{config.platform}</strong> (Build #{config.minBuildNumber}+)
+            {config.note ? ` — "${config.note}"` : ""}?
+            Devices running this build number will fall back to the next lower version tier.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

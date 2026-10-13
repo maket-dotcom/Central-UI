@@ -1,127 +1,74 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import axios from "axios"
 import { toast } from "sonner"
 import { getErrorMessage } from "@/utils/getErrorMessage"
 import {
-  getConfigs,
-  getConfig,
-  putConfig,
-  deleteConfig,
-  getConfigHistory,
-  rollbackConfig,
+  getRemoteConfigs,
+  getRemoteConfigById,
+  createRemoteConfig,
+  updateRemoteConfig,
+  deleteRemoteConfig,
 } from "@/services/keyboard/remoteConfig"
 import type {
-  PutConfigInputs,
-  RollbackConfigInputs,
+  ConfigPlatform,
+  CreateRemoteConfigInputs,
+  UpdateRemoteConfigInputs,
 } from "@/utils/schemas/keyboard/remoteConfigSchema"
 
-export const useGetConfigs = ({
-  initialized = true,
-}: { initialized?: boolean } = {}) => {
+export const useGetRemoteConfigs = (params?: { platform?: ConfigPlatform }) => {
   return useQuery({
-    queryKey: ["remoteConfigs"],
-    queryFn: () => getConfigs(),
-    enabled: initialized,
+    queryKey: ["remoteConfigs", params?.platform],
+    queryFn: () => getRemoteConfigs(params),
   })
 }
 
-export const useGetConfig = ({
-  namespace,
-  platform,
-}: {
-  namespace: string
-  platform: string
-}) => {
+export const useGetRemoteConfig = (id?: string) => {
   return useQuery({
-    queryKey: ["remoteConfig", namespace, platform],
-    queryFn: () => getConfig({ namespace, platform }),
-    enabled: !!namespace && !!platform,
+    queryKey: ["remoteConfig", id],
+    queryFn: () => getRemoteConfigById(id!),
+    enabled: !!id,
   })
 }
 
-export const usePutConfig = () => {
+export const useCreateRemoteConfig = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: {
-      namespace: string
-      platform: string
-      body: Omit<PutConfigInputs, "namespace" | "platform">
-    }) => putConfig(payload),
-    onSuccess: (_data, payload) => {
-      toast.success("Configuration published successfully")
-      queryClient.invalidateQueries({ queryKey: ["remoteConfigs"] })
-      queryClient.invalidateQueries({
-        queryKey: ["remoteConfig", payload.namespace, payload.platform],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["remoteConfigHistory", payload.namespace, payload.platform],
-      })
-    },
-    onError: (error: unknown) => {
-      if (axios.isAxiosError(error) && error.response?.status === 409) {
-        toast.error(
-          "Version conflict: Config was modified by another admin. Please refresh and review."
-        )
-      } else {
-        toast.error(getErrorMessage(error))
-      }
-    },
-  })
-}
-
-export const useDeleteConfig = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: { namespace: string; platform: string }) =>
-      deleteConfig(payload),
+    mutationFn: (body: CreateRemoteConfigInputs) => createRemoteConfig(body),
     onSuccess: () => {
-      toast.success("Configuration document deleted successfully")
+      toast.success("Remote configuration created successfully")
       queryClient.invalidateQueries({ queryKey: ["remoteConfigs"] })
     },
-    onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err))
     },
   })
 }
 
-export const useGetConfigHistory = ({
-  namespace,
-  platform,
-  limit = 50,
-}: {
-  namespace: string
-  platform: string
-  limit?: number
-}) => {
-  return useQuery({
-    queryKey: ["remoteConfigHistory", namespace, platform, limit],
-    queryFn: () => getConfigHistory({ namespace, platform, params: { limit } }),
-    enabled: !!namespace && !!platform,
-  })
-}
-
-export const useRollbackConfig = () => {
+export const useUpdateRemoteConfig = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: {
-      namespace: string
-      platform: string
-      body: RollbackConfigInputs
-    }) => rollbackConfig(payload),
+    mutationFn: (payload: { id: string; body: UpdateRemoteConfigInputs }) =>
+      updateRemoteConfig(payload.id, payload.body),
     onSuccess: (_data, payload) => {
-      toast.success(
-        `Successfully rolled back to version ${payload.body.version}`
-      )
+      toast.success("Remote configuration updated successfully")
       queryClient.invalidateQueries({ queryKey: ["remoteConfigs"] })
-      queryClient.invalidateQueries({
-        queryKey: ["remoteConfig", payload.namespace, payload.platform],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["remoteConfigHistory", payload.namespace, payload.platform],
-      })
+      queryClient.invalidateQueries({ queryKey: ["remoteConfig", payload.id] })
     },
-    onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err))
+    },
+  })
+}
+
+export const useDeleteRemoteConfig = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteRemoteConfig(id),
+    onSuccess: () => {
+      toast.success("Remote configuration deleted successfully")
+      queryClient.invalidateQueries({ queryKey: ["remoteConfigs"] })
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err))
     },
   })
 }

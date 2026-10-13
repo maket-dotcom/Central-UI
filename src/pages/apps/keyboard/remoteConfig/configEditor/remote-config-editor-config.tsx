@@ -37,6 +37,6 @@ export const RemoteConfigCreateConfig = {
 }
 
 export const RemoteConfigEditConfig = {
-  path: "/keyboard/remote-config/edit/:namespace/:platform",
+  path: "/keyboard/remote-config/edit/:id",
   element: <EditConfigContainer />,
 }

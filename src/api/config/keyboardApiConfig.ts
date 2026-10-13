@@ -51,31 +51,28 @@ export const keyboardApiConfig: ApiEndpoint[] = [
     hasPathParams: true,
   },
 
-  // Remote Config endpoints
-  { name: "getConfigs", path: "/api/v1/admin/configs/list" },
+  // Remote Config endpoints (Refactored)
   {
-    name: "getConfig",
-    path: "/api/v1/admin/configs/{namespace}/{platform}",
+    name: "getRemoteConfigs",
+    path: "/api/v1/admin/remote-configs/list",
+  },
+  {
+    name: "getRemoteConfigById",
+    path: "/api/v1/admin/remote-configs/{id}",
     hasPathParams: true,
   },
   {
-    name: "putConfig",
-    path: "/api/v1/admin/configs/{namespace}/{platform}",
+    name: "createRemoteConfig",
+    path: "/api/v1/admin/remote-configs",
+  },
+  {
+    name: "updateRemoteConfig",
+    path: "/api/v1/admin/remote-configs/{id}",
     hasPathParams: true,
   },
   {
-    name: "deleteConfig",
-    path: "/api/v1/admin/configs/{namespace}/{platform}",
-    hasPathParams: true,
-  },
-  {
-    name: "getConfigHistory",
-    path: "/api/v1/admin/configs/{namespace}/{platform}/history",
-    hasPathParams: true,
-  },
-  {
-    name: "rollbackConfig",
-    path: "/api/v1/admin/configs/{namespace}/{platform}/rollback",
+    name: "deleteRemoteConfig",
+    path: "/api/v1/admin/remote-configs/{id}",
     hasPathParams: true,
   },
 
