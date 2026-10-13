@@ -174,7 +174,7 @@ Features:
 - Form inputs:
   - `namespace` (read-only when editing).
   - `platform` selector (`all`, `android`, `ios`).
-  - `minBuildNumber` and `maxBuildNumber` integer inputs with tooltips.
+  - `minBuildNumber` and `maxBuildNumber` integer inputs with tooltips, validation guard (`minBuildNumber <= maxBuildNumber`), and unset support (sends `null` to MongoDB `$unset` when inputs are cleared).
   - Interactive `JsonEditorComponent` for `values`.
 - **Optimistic Locking Guard**:
   - Automatically captures `currentConfig.version`.

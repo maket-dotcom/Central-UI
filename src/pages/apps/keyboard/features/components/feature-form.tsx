@@ -768,6 +768,18 @@ export const FeatureForm: React.FC<FeatureFormProps> = ({
                       })}
                     />
                   </div>
+                  {errors.minBuildNumber?.android && (
+                    <p className="col-span-2 text-[10px] text-destructive">
+                      {errors.minBuildNumber.android.message}
+                    </p>
+                  )}
+                  {currentMinBuild.android != null &&
+                    currentMaxBuild.android != null &&
+                    currentMinBuild.android > currentMaxBuild.android && (
+                      <p className="col-span-2 text-[10px] text-destructive font-medium">
+                        ⚠️ Min Build ({currentMinBuild.android}) cannot exceed Max Build ({currentMaxBuild.android}).
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -808,6 +820,18 @@ export const FeatureForm: React.FC<FeatureFormProps> = ({
                       })}
                     />
                   </div>
+                  {errors.minBuildNumber?.ios && (
+                    <p className="col-span-2 text-[10px] text-destructive">
+                      {errors.minBuildNumber.ios.message}
+                    </p>
+                  )}
+                  {currentMinBuild.ios != null &&
+                    currentMaxBuild.ios != null &&
+                    currentMinBuild.ios > currentMaxBuild.ios && (
+                      <p className="col-span-2 text-[10px] text-destructive font-medium">
+                        ⚠️ Min Build ({currentMinBuild.ios}) cannot exceed Max Build ({currentMaxBuild.ios}).
+                      </p>
+                    )}
                 </div>
               </div>
             </div>

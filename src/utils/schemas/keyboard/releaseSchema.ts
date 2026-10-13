@@ -21,7 +21,7 @@ export interface Release {
   buildNumber: number
   downloadUrl: string
   changelog?: string
-  minBuildNumber?: number
+  minBuildNumber?: number | null
   forceUpdate: boolean
   rolloutPercentage: number
   status: ReleaseStatus
@@ -54,11 +54,19 @@ export const createReleaseSchema = z.object({
     .number()
     .int()
     .positive("Min build number must be a positive integer")
+    .nullable()
     .optional(),
   forceUpdate: z.boolean(),
   rolloutPercentage: z.number().int().min(0).max(100),
   status: releaseStatusEnum,
-})
+}).refine(
+  (data) => !data.minBuildNumber || data.minBuildNumber < data.buildNumber,
+  {
+    message:
+      "Minimum build threshold must be strictly less than release build number",
+    path: ["minBuildNumber"],
+  }
+)
 
 export const patchReleaseSchema = createReleaseSchema
   .omit({ platform: true, version: true })

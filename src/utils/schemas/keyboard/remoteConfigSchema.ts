@@ -63,14 +63,28 @@ export const putConfigSchema = z.object({
     .number()
     .int()
     .positive("Min build number must be positive")
+    .nullable()
     .optional(),
   maxBuildNumber: z
     .number()
     .int()
     .positive("Max build number must be positive")
+    .nullable()
     .optional(),
   expectedVersion: z.number().int().min(0).optional(),
-})
+}).refine(
+  (data) => {
+    if (data.minBuildNumber != null && data.maxBuildNumber != null) {
+      return data.minBuildNumber <= data.maxBuildNumber
+    }
+    return true
+  },
+  {
+    message:
+      "Minimum build number must be less than or equal to maximum build number",
+    path: ["minBuildNumber"],
+  }
+)
 
 export const rollbackConfigSchema = z.object({
   version: z.number().int().positive("Version must be a positive integer"),

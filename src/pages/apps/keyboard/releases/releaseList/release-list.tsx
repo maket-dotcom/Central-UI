@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ExternalLink,
   MoreVerticalIcon,
+  SlidersHorizontal,
 } from "lucide-react"
 import { IconBrandAndroid, IconBrandApple } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,8 @@ import { useTableSort } from "@/hooks/useTableSort"
 import DeleteReleaseDialog from "../delete-release"
 import type { Release } from "@/utils/schemas/keyboard/releaseSchema"
 import { format } from "date-fns"
+import { HelpButton } from "@/components/helpTour"
+import { ReleaseHelpDrawer } from "../components/release-help-drawer"
 
 export const ReleaseList: React.FC = () => {
   const navigate = useNavigate()
@@ -53,6 +56,9 @@ export const ReleaseList: React.FC = () => {
   // Delete Dialog State
   const [deleteTarget, setDeleteTarget] = useState<Release | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Operations Guide Drawer State
+  const [helpOpen, setHelpOpen] = useState(false)
 
   // API query params
   const queryParams = useMemo(() => {
@@ -130,6 +136,10 @@ export const ReleaseList: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <HelpButton
+            onClick={() => setHelpOpen(true)}
+            label="Operations Guide & Help"
+          />
           <Button
             variant="outline"
             size="icon"
@@ -299,7 +309,6 @@ export const ReleaseList: React.FC = () => {
               </TableRow>
             ) : (
               sortedItems.map((rel) => {
-                const isForce = rel.forceUpdate
                 return (
                   <TableRow
                     key={
@@ -392,13 +401,21 @@ export const ReleaseList: React.FC = () => {
 
                     {/* Update Type */}
                     <TableCell>
-                      {isForce ? (
+                      {rel.forceUpdate ? (
                         <Badge
                           variant="destructive"
                           className="gap-1 font-mono text-xs"
                         >
                           <AlertTriangle className="size-3" />
-                          Force (min #{rel.minBuildNumber || 1})
+                          Force (All Builds)
+                        </Badge>
+                      ) : rel.minBuildNumber && rel.minBuildNumber > 0 ? (
+                        <Badge
+                          variant="outline"
+                          className="gap-1 font-mono text-xs border-amber-500/40 text-amber-600 dark:text-amber-400"
+                        >
+                          <SlidersHorizontal className="size-3" />
+                          Force (&lt; #{rel.minBuildNumber})
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">
@@ -462,6 +479,9 @@ export const ReleaseList: React.FC = () => {
         onOpenChange={setDeleteOpen}
         release={deleteTarget}
       />
+
+      {/* Operations Guide Bottom Drawer */}
+      <ReleaseHelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   )
 }

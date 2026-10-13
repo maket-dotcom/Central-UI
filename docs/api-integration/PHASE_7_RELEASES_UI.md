@@ -85,9 +85,12 @@ Features:
   - **Build Number**: Clickable header toggles between ascending, descending, or default.
   - **Created At**: Clickable header toggles date sorting.
 - Visual Badges:
-  - Status: `active` (emerald-100/emerald-800), `draft` (slate-100/slate-800), `paused` (amber-100/amber-800), `archived` (zinc-100/zinc-700).
-  - Channel: `internal` (indigo), `beta` (amber), `production` (emerald).
-  - Force Update: Red badge `MANDATORY` if `forceUpdate` is true.
+  - Status: `active` (emerald), `draft` (slate), `paused` (amber), `archived` (zinc).
+  - Channel: `internal` (secondary), `beta` (secondary), `production` (default).
+  - Update Enforcement Policy:
+    - `Force (All Builds)`: Destructive badge when `forceUpdate: true`.
+    - `Force (< #X)`: Amber outline badge when `minBuildNumber` is set with `forceUpdate: false`.
+    - `Flexible`: Muted text for standard optional releases.
   - Rollout: Progress bar displaying `0–100%`.
 - Actions:
   - Edit (navigates to `/keyboard/releases/update/:id`).
@@ -106,8 +109,10 @@ Features:
   - Display Version input (semver formatted, e.g. `2.4.0`).
   - Integer Build Number input (e.g. `125`).
   - Download URL input (validated via `z.string().pipe(z.url())`).
-  - Minimum Build Number input with tooltip: *"Client builds older than this will receive a mandatory force-update prompt."*
-  - Force Update Switch toggle.
+  - **3-Option Update Enforcement Policy**:
+    - **Flexible (Optional)**: `forceUpdate = false`, `minBuildNumber = undefined` (Standard non-blocking prompt).
+    - **Selective Cutoff**: `forceUpdate = false`, `minBuildNumber = <int>` (Only builds `< minBuildNumber` are forced; builds `>= minBuildNumber` receive flexible prompts). Includes live client simulation preview.
+    - **Global Mandatory**: `forceUpdate = true`, `minBuildNumber = undefined` (Blocks 100% of older builds immediately).
   - Rollout Percentage slider (0 to 100%).
   - Changelog multiline textarea.
   - Status Select (defaults to `draft`).
@@ -126,7 +131,7 @@ Features:
 - Allows editing:
   - Lifecycle Status (e.g. promoting `draft` &rarr; `active` or `paused`).
   - Rollout Percentage (gradually ramping from 10% &rarr; 100%).
-  - Minimum Build Number and Force Update flag.
+  - **Update Enforcement Policy**: Easily switch between Flexible, Selective Cutoff (`minBuildNumber`), or Global Mandatory with real-time client simulation.
   - Download URL and Changelog notes.
 - Calls `useUpdateRelease()` and navigates back to list on success.
 

@@ -110,10 +110,21 @@ export const putConfigSchema = z.object({
     .refine((val) => validateConfigKeys(val), {
       message: 'Config keys cannot start with "$" or contain "."',
     }),
-  minBuildNumber: z.coerce.number().int().positive("Min build number must be positive").optional(),
-  maxBuildNumber: z.coerce.number().int().positive("Max build number must be positive").optional(),
+  minBuildNumber: z.coerce.number().int().positive("Min build number must be positive").nullable().optional(),
+  maxBuildNumber: z.coerce.number().int().positive("Max build number must be positive").nullable().optional(),
   expectedVersion: z.number().int().min(0).optional(),
-})
+}).refine(
+  (data) => {
+    if (data.minBuildNumber != null && data.maxBuildNumber != null) {
+      return data.minBuildNumber <= data.maxBuildNumber
+    }
+    return true
+  },
+  {
+    message: "Minimum build number must be less than or equal to maximum build number",
+    path: ["minBuildNumber"],
+  }
+)
 
 export const rollbackConfigSchema = z.object({
   version: z.number().int().positive("Version must be a positive integer"),
@@ -148,7 +159,7 @@ export interface Release {
   buildNumber: number
   downloadUrl: string
   changelog?: string
-  minBuildNumber?: number
+  minBuildNumber?: number | null
   forceUpdate: boolean
   rolloutPercentage: number
   status: ReleaseStatus
@@ -174,11 +185,17 @@ export const createReleaseSchema = z.object({
     .min(1, "Download URL is required")
     .pipe(z.url({ message: "Download URL must be a valid URL" })),
   changelog: z.string().trim().optional(),
-  minBuildNumber: z.coerce.number().int().positive("Min build number must be a positive integer").optional(),
+  minBuildNumber: z.coerce.number().int().positive("Min build number must be a positive integer").nullable().optional(),
   forceUpdate: z.boolean().default(false),
   rolloutPercentage: z.coerce.number().int().min(0).max(100).default(100),
   status: releaseStatusEnum.default("draft"),
-})
+}).refine(
+  (data) => !data.minBuildNumber || data.minBuildNumber < data.buildNumber,
+  {
+    message: "Minimum build threshold must be strictly less than release build number",
+    path: ["minBuildNumber"],
+  }
+)
 
 export const patchReleaseSchema = createReleaseSchema
   .omit({ platform: true, version: true })
@@ -215,12 +232,12 @@ export interface FeatureFlag {
   platforms?: FeaturePlatform[]
   channels?: FeatureChannel[]
   minBuildNumber?: {
-    android?: number
-    ios?: number
+    android?: number | null
+    ios?: number | null
   }
   maxBuildNumber?: {
-    android?: number
-    ios?: number
+    android?: number | null
+    ios?: number | null
   }
   rolloutPercentage: number
   allowDevices?: string[]
@@ -232,28 +249,57 @@ export interface FeatureFlag {
 
 const buildThresholdSchema = z
   .object({
-    android: z.coerce.number().int().positive("Android build number must be positive").optional(),
-    ios: z.coerce.number().int().positive("iOS build number must be positive").optional(),
+    android: z.coerce.number().int().positive("Android build number must be positive").nullable().optional(),
+    ios: z.coerce.number().int().positive("iOS build number must be positive").nullable().optional(),
   })
   .optional()
 
-export const createFeatureSchema = z.object({
-  key: z
-    .string()
-    .trim()
-    .min(1, "Feature key is required")
-    .regex(/^[a-z0-9_-]+$/, "Key must contain lowercase letters, numbers, hyphens, or underscores"),
-  description: z.string().trim().optional(),
-  enabled: z.boolean().default(false),
-  platforms: z.array(featurePlatformEnum).default([]),
-  channels: z.array(featureChannelEnum).default([]),
-  minBuildNumber: buildThresholdSchema,
-  maxBuildNumber: buildThresholdSchema,
-  rolloutPercentage: z.coerce.number().int().min(0).max(100).default(100),
-  allowDevices: z.array(z.string().trim().min(1)).max(50, "Max 50 devices allowed").default([]),
-  denyDevices: z.array(z.string().trim().min(1)).max(50, "Max 50 devices allowed").default([]),
-  payload: z.record(z.string(), z.unknown()).optional(),
-})
+export const createFeatureSchema = z
+  .object({
+    key: z
+      .string()
+      .trim()
+      .min(1, "Feature key is required")
+      .regex(/^[a-z0-9_-]+$/, "Key must contain lowercase letters, numbers, hyphens, or underscores"),
+    description: z.string().trim().optional(),
+    enabled: z.boolean().default(false),
+    platforms: z.array(featurePlatformEnum).default([]),
+    channels: z.array(featureChannelEnum).default([]),
+    minBuildNumber: buildThresholdSchema,
+    maxBuildNumber: buildThresholdSchema,
+    rolloutPercentage: z.coerce.number().int().min(0).max(100).default(100),
+    allowDevices: z.array(z.string().trim().min(1)).max(50, "Max 50 devices allowed").default([]),
+    denyDevices: z.array(z.string().trim().min(1)).max(50, "Max 50 devices allowed").default([]),
+    payload: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine(
+    (data) => {
+      const androidMin = data.minBuildNumber?.android
+      const androidMax = data.maxBuildNumber?.android
+      if (androidMin != null && androidMax != null && androidMin > androidMax) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "Android minimum build must be less than or equal to maximum build",
+      path: ["minBuildNumber", "android"],
+    }
+  )
+  .refine(
+    (data) => {
+      const iosMin = data.minBuildNumber?.ios
+      const iosMax = data.maxBuildNumber?.ios
+      if (iosMin != null && iosMax != null && iosMin > iosMax) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "iOS minimum build must be less than or equal to maximum build",
+      path: ["minBuildNumber", "ios"],
+    }
+  )
 
 export const patchFeatureSchema = createFeatureSchema
   .omit({ key: true })

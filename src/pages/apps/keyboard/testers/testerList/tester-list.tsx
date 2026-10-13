@@ -39,6 +39,8 @@ import { useTableSort } from "@/hooks/useTableSort"
 import TesterDialog from "../addEditTester/tester-dialog"
 import DeleteTesterDialog from "../delete-tester"
 import type { Tester } from "@/utils/schemas/keyboard/testerSchema"
+import { HelpButton } from "@/components/helpTour"
+import { TesterHelpDrawer } from "../components/tester-help-drawer"
 
 export default function TesterList() {
   const { data: testersResp, isLoading, isFetching, refetch } = useGetTesters()
@@ -50,6 +52,7 @@ export default function TesterList() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingTester, setDeletingTester] = useState<Tester | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const testers: Tester[] = useMemo(() => {
     return Array.isArray(testersResp?.data) ? testersResp.data : []
@@ -131,6 +134,10 @@ export default function TesterList() {
         </div>
 
         <div className="flex items-center gap-2">
+          <HelpButton
+            onClick={() => setHelpOpen(true)}
+            label="Operations Guide & Help"
+          />
           <Button
             variant="outline"
             size="icon"
@@ -373,6 +380,9 @@ export default function TesterList() {
         onOpenChange={setDeleteOpen}
         tester={deletingTester}
       />
+
+      {/* Operations Guide Bottom Drawer */}
+      <TesterHelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   )
 }

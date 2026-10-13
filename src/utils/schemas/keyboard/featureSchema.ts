@@ -14,12 +14,12 @@ export interface FeatureFlag {
   platforms?: FeaturePlatform[]
   channels?: FeatureChannel[]
   minBuildNumber?: {
-    android?: number
-    ios?: number
+    android?: number | null
+    ios?: number | null
   }
   maxBuildNumber?: {
-    android?: number
-    ios?: number
+    android?: number | null
+    ios?: number | null
   }
   rolloutPercentage: number
   allowDevices?: string[]
@@ -35,41 +35,73 @@ const buildThresholdSchema = z
       .number()
       .int()
       .positive("Android build number must be positive")
+      .nullable()
       .optional(),
     ios: z
       .number()
       .int()
       .positive("iOS build number must be positive")
+      .nullable()
       .optional(),
   })
   .optional()
 
-export const createFeatureSchema = z.object({
-  key: z
-    .string()
-    .trim()
-    .min(1, "Feature key is required")
-    .regex(
-      /^[a-z0-9_-]+$/,
-      "Key must contain lowercase letters, numbers, hyphens, or underscores"
-    ),
-  description: z.string().trim().optional(),
-  enabled: z.boolean(),
-  platforms: z.array(featurePlatformEnum).optional(),
-  channels: z.array(featureChannelEnum).optional(),
-  minBuildNumber: buildThresholdSchema,
-  maxBuildNumber: buildThresholdSchema,
-  rolloutPercentage: z.number().int().min(0).max(100),
-  allowDevices: z
-    .array(z.string().trim().min(1))
-    .max(50, "Max 50 devices allowed")
-    .optional(),
-  denyDevices: z
-    .array(z.string().trim().min(1))
-    .max(50, "Max 50 devices allowed")
-    .optional(),
-  payload: z.record(z.string(), z.unknown()).optional(),
-})
+export const createFeatureSchema = z
+  .object({
+    key: z
+      .string()
+      .trim()
+      .min(1, "Feature key is required")
+      .regex(
+        /^[a-z0-9_-]+$/,
+        "Key must contain lowercase letters, numbers, hyphens, or underscores"
+      ),
+    description: z.string().trim().optional(),
+    enabled: z.boolean(),
+    platforms: z.array(featurePlatformEnum).optional(),
+    channels: z.array(featureChannelEnum).optional(),
+    minBuildNumber: buildThresholdSchema,
+    maxBuildNumber: buildThresholdSchema,
+    rolloutPercentage: z.number().int().min(0).max(100),
+    allowDevices: z
+      .array(z.string().trim().min(1))
+      .max(50, "Max 50 devices allowed")
+      .optional(),
+    denyDevices: z
+      .array(z.string().trim().min(1))
+      .max(50, "Max 50 devices allowed")
+      .optional(),
+    payload: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine(
+    (data) => {
+      const androidMin = data.minBuildNumber?.android
+      const androidMax = data.maxBuildNumber?.android
+      if (androidMin != null && androidMax != null && androidMin > androidMax) {
+        return false
+      }
+      return true
+    },
+    {
+      message:
+        "Android minimum build must be less than or equal to maximum build",
+      path: ["minBuildNumber", "android"],
+    }
+  )
+  .refine(
+    (data) => {
+      const iosMin = data.minBuildNumber?.ios
+      const iosMax = data.maxBuildNumber?.ios
+      if (iosMin != null && iosMax != null && iosMin > iosMax) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "iOS minimum build must be less than or equal to maximum build",
+      path: ["minBuildNumber", "ios"],
+    }
+  )
 
 export const patchFeatureSchema = createFeatureSchema
   .omit({ key: true })

@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Sliders, Layers, FileCode2 } from "lucide-react"
+import { ArrowLeft, Sliders, Layers, FileCode2, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -98,7 +98,21 @@ export default function RemoteConfigEditor({
     setValue,
   ])
 
+  const watchMinBuild = useWatch({ control, name: "minBuildNumber" })
+  const watchMaxBuild = useWatch({ control, name: "maxBuildNumber" })
+
   const onSubmit = (formData: PutConfigInputs) => {
+    if (
+      formData.minBuildNumber != null &&
+      formData.maxBuildNumber != null &&
+      formData.minBuildNumber > formData.maxBuildNumber
+    ) {
+      toast.error(
+        `Minimum build number (${formData.minBuildNumber}) must be less than or equal to maximum build number (${formData.maxBuildNumber})`
+      )
+      return
+    }
+
     const expectedVersion = isEditing ? currentConfig?.version : 0
 
     putConfigMutation.mutate(
@@ -107,8 +121,18 @@ export default function RemoteConfigEditor({
         platform: formData.platform,
         body: {
           values: formData.values,
-          minBuildNumber: formData.minBuildNumber,
-          maxBuildNumber: formData.maxBuildNumber,
+          minBuildNumber:
+            formData.minBuildNumber !== undefined
+              ? formData.minBuildNumber
+              : isEditing
+                ? null
+                : undefined,
+          maxBuildNumber:
+            formData.maxBuildNumber !== undefined
+              ? formData.maxBuildNumber
+              : isEditing
+                ? null
+                : undefined,
           expectedVersion,
         },
       },
@@ -337,6 +361,19 @@ export default function RemoteConfigEditor({
                 </p>
               </div>
             </div>
+
+            {watchMinBuild != null &&
+              watchMaxBuild != null &&
+              watchMinBuild > watchMaxBuild && (
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-2.5 text-xs font-medium text-destructive">
+                  <AlertTriangle className="size-4 shrink-0" />
+                  <span>
+                    <strong>Invalid Build Range:</strong> Minimum build number (
+                    {watchMinBuild}) cannot exceed maximum build number (
+                    {watchMaxBuild}). No client could ever match this configuration.
+                  </span>
+                </div>
+              )}
           </CardContent>
         </Card>
 

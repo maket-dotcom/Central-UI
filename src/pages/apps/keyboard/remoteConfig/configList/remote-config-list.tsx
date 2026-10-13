@@ -47,6 +47,8 @@ import type {
   RemoteConfigDoc,
   ConfigPlatform,
 } from "@/utils/schemas/keyboard/remoteConfigSchema"
+import { HelpButton } from "@/components/helpTour"
+import { RemoteConfigHelpDrawer } from "../components/remote-config-help-drawer"
 
 type PlatformTab = "all" | "android" | "ios"
 type ViewMode = "table" | "cards"
@@ -70,6 +72,7 @@ export default function RemoteConfigList() {
     version: number
   } | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const configs: RemoteConfigDoc[] = useMemo(() => {
     return Array.isArray(configsResp?.data) ? configsResp.data : []
@@ -208,6 +211,10 @@ export default function RemoteConfigList() {
         </div>
 
         <div className="flex items-center gap-2">
+          <HelpButton
+            onClick={() => setHelpOpen(true)}
+            label="Operations Guide & Help"
+          />
           <Button
             variant="outline"
             size="icon"
@@ -779,6 +786,9 @@ export default function RemoteConfigList() {
           currentVersion={historyTarget.version}
         />
       )}
+
+      {/* Operations Guide Bottom Drawer */}
+      <RemoteConfigHelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   )
 }

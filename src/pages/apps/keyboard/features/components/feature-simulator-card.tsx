@@ -29,8 +29,8 @@ export interface FlagSimulationConfig {
   enabled: boolean
   platforms?: FeaturePlatform[]
   channels?: FeatureChannel[]
-  minBuildNumber?: { android?: number; ios?: number }
-  maxBuildNumber?: { android?: number; ios?: number }
+  minBuildNumber?: { android?: number | null; ios?: number | null }
+  maxBuildNumber?: { android?: number | null; ios?: number | null }
   rolloutPercentage: number
   allowDevices?: string[]
   denyDevices?: string[]
@@ -244,7 +244,7 @@ export const FeatureSimulatorCard: React.FC<FeatureSimulatorCardProps> = ({
     const minBuild = flagConfig.minBuildNumber?.[testPlatform]
     const maxBuild = flagConfig.maxBuildNumber?.[testPlatform]
 
-    if (minBuild !== undefined && testBuildNumber < minBuild) {
+    if (minBuild != null && testBuildNumber < minBuild) {
       trace.push({
         gateNumber: 6,
         name: "Build Threshold Bounds",
@@ -261,7 +261,7 @@ export const FeatureSimulatorCard: React.FC<FeatureSimulatorCardProps> = ({
       return
     }
 
-    if (maxBuild !== undefined && testBuildNumber > maxBuild) {
+    if (maxBuild != null && testBuildNumber > maxBuild) {
       trace.push({
         gateNumber: 6,
         name: "Build Threshold Bounds",
