@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { useState, useMemo } from "react"
+import { CheckIcon, ChevronDownIcon } from "lucide-react"
 
 import {
   Select,
@@ -9,12 +9,12 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover"
 import {
   Command,
   CommandEmpty,
@@ -22,34 +22,34 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@/components/ui/command"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 interface SelectOption {
-  name: string;
-  value: string;
+  name: string
+  value: string
 }
 
 interface SelectProps {
-  id?: string;
-  name?: string;
-  placeholder?: string;
-  title?: string;
-  ariaInvalid?: boolean;
-  className?: string;
-  size?: "sm" | "default";
-  errorTooltip?: string;
-  tooltip?: string;
-  onValueChange?: (value: string) => void;
-  value?: string;
-  data?: SelectOption[];
-  search?: boolean;
-  disabled?: boolean;
+  id?: string
+  name?: string
+  placeholder?: string
+  title?: string
+  ariaInvalid?: boolean
+  className?: string
+  size?: "sm" | "default"
+  errorTooltip?: string
+  tooltip?: string
+  onValueChange?: (value: string) => void
+  value?: string
+  data?: SelectOption[]
+  search?: boolean
+  disabled?: boolean
 }
 
 /**
@@ -71,11 +71,16 @@ const SelectComponent = ({
   search = false,
   disabled = false,
 }: SelectProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
+
+  // Prepare items structure for Base UI Select so it recognizes labels
+  const baseItems = useMemo(() => {
+    return data.map((d) => ({ value: d.value, label: d.name }))
+  }, [data])
 
   // Searchable combobox variant
   if (search) {
-    const selectedOption = data.find((d) => d.value === value);
+    const selectedOption = data.find((d) => d.value === value)
 
     const triggerButton = (
       <button
@@ -92,16 +97,18 @@ const SelectComponent = ({
           className
         )}
       >
-        <span className="line-clamp-1 flex-1 text-left flex items-center gap-2">
+        <span className="line-clamp-1 flex flex-1 items-center gap-2 text-left">
           {selectedOption ? (
             selectedOption.name
           ) : (
-            <span className="text-muted-foreground">{placeholder || "Select"}</span>
+            <span className="text-muted-foreground">
+              {placeholder || "Select"}
+            </span>
           )}
         </span>
-        <ChevronDownIcon className="size-4 opacity-50 shrink-0" />
+        <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
       </button>
-    );
+    )
 
     return (
       <Popover open={open} onOpenChange={setOpen}>
@@ -109,7 +116,11 @@ const SelectComponent = ({
           <TooltipTrigger render={<PopoverTrigger render={triggerButton} />} />
           {(errorTooltip || tooltip) && (
             <TooltipContent
-              className={errorTooltip ? "bg-destructive font-semibold text-destructive-foreground" : ""}
+              className={
+                errorTooltip
+                  ? "text-destructive-foreground bg-destructive font-semibold"
+                  : ""
+              }
             >
               <p>{errorTooltip || tooltip}</p>
             </TooltipContent>
@@ -128,8 +139,8 @@ const SelectComponent = ({
                     value={d.value}
                     keywords={[d.name]}
                     onSelect={() => {
-                      onValueChange?.(d.value);
-                      setOpen(false);
+                      onValueChange?.(d.value)
+                      setOpen(false)
                     }}
                     className="cursor-pointer"
                   >
@@ -147,32 +158,27 @@ const SelectComponent = ({
           </Command>
         </PopoverContent>
       </Popover>
-    );
+    )
   }
-
-  // Prepare items structure for Base UI Select so it recognizes labels
-  const baseItems = useMemo(() => {
-    return data.map((d) => ({ value: d.value, label: d.name }));
-  }, [data]);
 
   // Standard select dropdown variant
   const triggerElement = (
     <SelectTrigger
       id={id}
       aria-invalid={ariaInvalid}
-      className={cn("cursor-pointer w-full", className)}
+      className={cn("w-full cursor-pointer", className)}
       size={size}
     >
       <SelectValue placeholder={placeholder || "Select"}>
         {(val) => {
-          const selectedOption = data.find((d) => d.value === val);
+          const selectedOption = data.find((d) => d.value === val)
           return selectedOption
             ? selectedOption.name
-            : (val || placeholder || "Select");
+            : val || placeholder || "Select"
         }}
       </SelectValue>
     </SelectTrigger>
-  );
+  )
 
   return (
     <Select
@@ -180,7 +186,7 @@ const SelectComponent = ({
       items={baseItems}
       disabled={disabled}
       onValueChange={(val) => {
-        if (typeof val === "string") onValueChange?.(val);
+        if (typeof val === "string") onValueChange?.(val)
       }}
       value={value}
     >
@@ -188,7 +194,11 @@ const SelectComponent = ({
         <TooltipTrigger render={triggerElement} />
         {(errorTooltip || tooltip) && (
           <TooltipContent
-            className={errorTooltip ? "bg-destructive font-semibold text-destructive-foreground" : ""}
+            className={
+              errorTooltip
+                ? "text-destructive-foreground bg-destructive font-semibold"
+                : ""
+            }
           >
             <p>{errorTooltip || tooltip}</p>
           </TooltipContent>
@@ -211,7 +221,7 @@ const SelectComponent = ({
         </SelectGroup>
       </SelectContent>
     </Select>
-  );
-};
+  )
+}
 
-export default SelectComponent;
+export default SelectComponent
