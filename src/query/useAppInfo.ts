@@ -8,6 +8,10 @@ import {
   updateApp,
   deleteApp,
 } from "@/services/appInfo"
+import type {
+  AddAppInputs,
+  UpdateAppInputs,
+} from "@/utils/schemas/appInfoSchema"
 
 /**
  * React Query hook for fetching the list of applications from Central-Backend.
@@ -48,7 +52,7 @@ export const useGetAppById = (id: string) => {
 export const useAddApp = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { body: Record<string, unknown> }) => addApp(payload),
+    mutationFn: (payload: { body: AddAppInputs }) => addApp(payload),
     onSuccess: () => {
       toast.success("App created successfully")
       queryClient.invalidateQueries({ queryKey: ["apps"] })
@@ -62,8 +66,9 @@ export const useAddApp = () => {
 export const useUpdateApp = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload: { id: string; body: Record<string, unknown> }) =>
+    mutationFn: (payload: { id: string; body: UpdateAppInputs }) =>
       updateApp(payload),
+
     onSuccess: (_data, payload) => {
       toast.success("App updated successfully")
       queryClient.invalidateQueries({ queryKey: ["apps"] })

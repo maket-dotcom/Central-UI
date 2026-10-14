@@ -21,14 +21,14 @@ export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
   const setSelectedApp = useAppStore((state) => state.setSelectedApp)
   const { data: appsData, isLoading } = useGetApps()
 
-  // Extract application array safely from API response structure
+  // Extract application array safely from API response structure (handles nested data envelopes)
   const appsList: SelectedApp[] = Array.isArray(appsData?.data?.data)
     ? appsData.data.data
     : Array.isArray(appsData?.data)
-      ? appsData.data
-      : Array.isArray(appsData)
-        ? appsData
-        : []
+      ? (appsData.data as unknown as SelectedApp[])
+      : []
+
+
 
   // If we have API data, try to find the expected app
   const foundApp = appsList.find(

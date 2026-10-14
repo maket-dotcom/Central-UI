@@ -1,6 +1,12 @@
 import { createApiClient } from "@/api/apiClient"
 import { centralApiConfig } from "@/api/config/centralApiConfig"
 import centralInstance from "@/api/centralInstance"
+import type {
+  AddAppInputs,
+  UpdateAppInputs,
+  AppListResponse,
+  SingleAppResponse,
+} from "@/utils/schemas/appInfoSchema"
 
 // Initialize parameterized API client configured with Central-Backend endpoints and centralInstance
 const api = createApiClient(centralApiConfig, centralInstance)
@@ -9,12 +15,12 @@ const api = createApiClient(centralApiConfig, centralInstance)
  * Fetch all registered apps from Central-Backend.
  * Endpoint: GET /api/v1/app-info/get
  *
- * @param params - Optional query parameters (e.g. status filter, pagination)
- * @returns Response data containing the list of apps
+ * @param params - Optional query parameters (e.g. page, limit, appName)
+ * @returns Response data containing the list of apps and pagination
  */
 export const getApps = async ({
   params,
-}: { params?: Record<string, unknown> } = {}) => {
+}: { params?: Record<string, unknown> } = {}): Promise<AppListResponse> => {
   const { data } = await api.get("getApps", params)
   return data
 }
@@ -26,7 +32,11 @@ export const getApps = async ({
  * @param id - App document ID
  * @returns Response data containing the app details
  */
-export const getAppById = async ({ id }: { id: string }) => {
+export const getAppById = async ({
+  id,
+}: {
+  id: string
+}): Promise<SingleAppResponse> => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.get("getAppById", undefined, undefined, { id })
   return data
@@ -36,10 +46,14 @@ export const getAppById = async ({ id }: { id: string }) => {
  * Register a new app in Central-Backend.
  * Endpoint: POST /api/v1/app-info/add
  *
- * @param body - App payload (e.g. appName, backendBaseUrl, status)
+ * @param body - App payload (appName, backendBaseUrl)
  * @returns Response data for the created app
  */
-export const addApp = async ({ body }: { body: Record<string, unknown> }) => {
+export const addApp = async ({
+  body,
+}: {
+  body: AddAppInputs
+}): Promise<SingleAppResponse> => {
   const { data } = await api.post("addApp", body)
   return data
 }
@@ -57,8 +71,8 @@ export const updateApp = async ({
   body,
 }: {
   id: string
-  body: Record<string, unknown>
-}) => {
+  body: UpdateAppInputs
+}): Promise<SingleAppResponse> => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.patch("updateApp", body, undefined, { id })
   return data
@@ -71,7 +85,11 @@ export const updateApp = async ({
  * @param id - App document ID to delete
  * @returns Response data acknowledging deletion
  */
-export const deleteApp = async ({ id }: { id: string }) => {
+export const deleteApp = async ({
+  id,
+}: {
+  id: string
+}): Promise<{ message: string; data: unknown }> => {
   // Pass { id } to resolve path parameter {id} in URL
   const { data } = await api.del("deleteApp", undefined, { id })
   return data

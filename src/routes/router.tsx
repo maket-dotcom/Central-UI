@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
-import LoginPage from "@/pages/auth/login"
-import AppSelectionPage from "@/pages/appSelection/app-selection"
-import ProtectedRoute from "@/routes/protected-route"
+import { loginConfig } from "@/pages/centralUI/auth/login-config"
+import { CentralAppRoutes } from "@/pages/centralUI/central-ui-routes"
 import { KeyboardAppRoutes } from "@/pages/apps/keyboard/keyboard-routes"
 
 /**
@@ -11,22 +10,12 @@ import { KeyboardAppRoutes } from "@/pages/apps/keyboard/keyboard-routes"
  */
 export const router = createBrowserRouter([
   // Common: Public Login Screen (unprotected)
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
+  loginConfig,
 
-  // Common: Application Catalog (protected by auth token)
-  {
-    path: "/apps",
-    element: (
-      <ProtectedRoute>
-        <AppSelectionPage />
-      </ProtectedRoute>
-    ),
-  },
+  // Central Platform Routes (/apps, /apps/manage)
+  CentralAppRoutes,
 
-  // App-Scoped Routes
+  // App-Scoped Routes (/keyboard/*)
   KeyboardAppRoutes,
   // Future apps will be added here (e.g., VanshavaliAppRoutes)
 
