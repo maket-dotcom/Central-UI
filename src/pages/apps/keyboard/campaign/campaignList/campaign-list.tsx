@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { getErrorMessage } from "@/utils/getErrorMessage"
@@ -46,6 +46,8 @@ import type { Campaign } from "@/utils/schemas/keyboard/campaignSchema"
 
 export default function CampaignList() {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const {
     data: campaignsResp,
     isLoading,
@@ -174,7 +176,7 @@ export default function CampaignList() {
               className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button onClick={() => navigate("/keyboard/campaign/add")}>
+          <Button onClick={() => navigate(`/${appSlug}/campaign/add`)}>
             <Plus className="mr-2 h-4 w-4" /> Add Campaign
           </Button>
         </div>
@@ -299,7 +301,7 @@ export default function CampaignList() {
                           variant="outline"
                           size="sm"
                           className="mt-2"
-                          onClick={() => navigate("/keyboard/campaign/add")}
+                          onClick={() => navigate(`/${appSlug}/campaign/add`)}
                         >
                           <Plus className="mr-1.5 h-3.5 w-3.5" /> Create your
                           first campaign
@@ -490,7 +492,7 @@ export default function CampaignList() {
                           <DropdownMenuItem
                             onClick={() =>
                               navigate(
-                                `/keyboard/campaign/update/${campaignId}`
+                                `/${appSlug}/campaign/update/${campaignId}`
                               )
                             }
                             className="cursor-pointer"

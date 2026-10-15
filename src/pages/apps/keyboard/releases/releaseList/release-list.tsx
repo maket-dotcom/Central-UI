@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Plus,
   RefreshCw,
@@ -46,6 +46,8 @@ import { ReleaseHelpDrawer } from "../components/release-help-drawer"
 
 export const ReleaseList: React.FC = () => {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
 
   // Filter States
   const [platformFilter, setPlatformFilter] = useState<string>("all")
@@ -151,7 +153,7 @@ export const ReleaseList: React.FC = () => {
               className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button onClick={() => navigate("/keyboard/releases/add")}>
+          <Button onClick={() => navigate(`/${appSlug}/releases/add`)}>
             <Plus className="mr-2 h-4 w-4" /> New Release
           </Button>
         </div>
@@ -298,7 +300,7 @@ export const ReleaseList: React.FC = () => {
                           variant="outline"
                           size="sm"
                           className="mt-2"
-                          onClick={() => navigate("/keyboard/releases/add")}
+                          onClick={() => navigate(`/${appSlug}/releases/add`)}
                         >
                           <Plus className="mr-1.5 h-3.5 w-3.5" /> Publish your
                           first release
@@ -412,7 +414,7 @@ export const ReleaseList: React.FC = () => {
                       ) : rel.minBuildNumber && rel.minBuildNumber > 0 ? (
                         <Badge
                           variant="outline"
-                          className="gap-1 font-mono text-xs border-amber-500/40 text-amber-600 dark:text-amber-400"
+                          className="gap-1 border-amber-500/40 font-mono text-xs text-amber-600 dark:text-amber-400"
                         >
                           <SlidersHorizontal className="size-3" />
                           Force (&lt; #{rel.minBuildNumber})
@@ -449,7 +451,7 @@ export const ReleaseList: React.FC = () => {
                         <DropdownMenuContent align="end" className="w-36">
                           <DropdownMenuItem
                             onClick={() =>
-                              navigate(`/keyboard/releases/update/${rel._id}`)
+                              navigate(`/${appSlug}/releases/update/${rel._id}`)
                             }
                             className="cursor-pointer"
                           >

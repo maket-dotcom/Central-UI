@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Plus,
   RefreshCw,
@@ -62,6 +62,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 export const FeatureList: React.FC = () => {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const {
     data: featuresResp,
     isLoading,
@@ -270,7 +272,7 @@ export const FeatureList: React.FC = () => {
           </Button>
 
           <Button
-            onClick={() => navigate("/keyboard/features/add")}
+            onClick={() => navigate(`/${appSlug}/features/add`)}
             className="cursor-pointer font-semibold"
           >
             <Plus className="mr-1.5 h-4 w-4" /> New Feature Flag
@@ -412,7 +414,7 @@ export const FeatureList: React.FC = () => {
                           variant="outline"
                           size="sm"
                           className="mt-2"
-                          onClick={() => navigate("/keyboard/features/add")}
+                          onClick={() => navigate(`/${appSlug}/features/add`)}
                         >
                           <Plus className="mr-1.5 h-3.5 w-3.5" /> Define your
                           first feature flag
@@ -659,7 +661,7 @@ export const FeatureList: React.FC = () => {
                             <DropdownMenuItem
                               onClick={() =>
                                 navigate(
-                                  `/keyboard/features/update/${flag.key}`
+                                  `/${appSlug}/features/update/${flag.key}`
                                 )
                               }
                               className="cursor-pointer gap-2"

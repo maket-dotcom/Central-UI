@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -40,6 +40,8 @@ type UpdatePolicy = "flexible" | "selective" | "global_force"
 
 export const AddRelease: React.FC = () => {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const createMutation = useCreateRelease()
   const [updatePolicy, setUpdatePolicy] = useState<UpdatePolicy>("flexible")
 
@@ -84,7 +86,9 @@ export const AddRelease: React.FC = () => {
   const onSubmit = (data: CreateReleaseInputs) => {
     if (updatePolicy === "selective") {
       if (!data.minBuildNumber || data.minBuildNumber < 1) {
-        toast.error("Please enter a valid positive integer for Minimum Required Build Threshold")
+        toast.error(
+          "Please enter a valid positive integer for Minimum Required Build Threshold"
+        )
         return
       }
       if (data.buildNumber && data.minBuildNumber >= data.buildNumber) {
@@ -106,18 +110,18 @@ export const AddRelease: React.FC = () => {
       { body: payload },
       {
         onSuccess: () => {
-          navigate("/keyboard/releases/list")
+          navigate(`/${appSlug}/releases/list`)
         },
       }
     )
   }
 
   const handleCancel = () => {
-    navigate("/keyboard/releases/list")
+    navigate(`/${appSlug}/releases/list`)
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 w-full">
+    <div className="flex w-full flex-1 flex-col gap-6">
       {/* Header with back navigation */}
       <div className="flex items-center gap-4">
         <Button
@@ -159,7 +163,8 @@ export const AddRelease: React.FC = () => {
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Platform identity, release distribution channel, and binary locator
+              Platform identity, release distribution channel, and binary
+              locator
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -284,7 +289,8 @@ export const AddRelease: React.FC = () => {
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Publication state, staged rollout percentage, and in-app update enforcement
+              Publication state, staged rollout percentage, and in-app update
+              enforcement
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -304,7 +310,10 @@ export const AddRelease: React.FC = () => {
                       data={[
                         { name: "Draft (Unpublished)", value: "draft" },
                         { name: "Active (Serving updates)", value: "active" },
-                        { name: "Paused (Temporarily halted)", value: "paused" },
+                        {
+                          name: "Paused (Temporarily halted)",
+                          value: "paused",
+                        },
                         { name: "Archived", value: "archived" },
                       ]}
                       className="w-full"
@@ -374,7 +383,8 @@ export const AddRelease: React.FC = () => {
                   Update Enforcement Policy *
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Determine how client devices evaluate update urgency (optional flexible prompt vs. blocking mandatory modal).
+                  Determine how client devices evaluate update urgency (optional
+                  flexible prompt vs. blocking mandatory modal).
                 </p>
               </div>
 
@@ -385,14 +395,14 @@ export const AddRelease: React.FC = () => {
                   type="button"
                   onClick={() => handlePolicyChange("flexible")}
                   className={cn(
-                    "flex flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all cursor-pointer",
+                    "flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all",
                     updatePolicy === "flexible"
-                      ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
+                      ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary"
                       : "border-border bg-card hover:bg-muted/40"
                   )}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-medium text-xs">
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
                       <CheckCircle2 className="size-4 text-emerald-500" />
                       Flexible
                     </span>
@@ -400,8 +410,9 @@ export const AddRelease: React.FC = () => {
                       Default
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Non-blocking update dialog ("Update Now" / "Later"). Recommended for standard feature releases.
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Non-blocking update dialog ("Update Now" / "Later").
+                    Recommended for standard feature releases.
                   </p>
                 </button>
 
@@ -410,14 +421,14 @@ export const AddRelease: React.FC = () => {
                   type="button"
                   onClick={() => handlePolicyChange("selective")}
                   className={cn(
-                    "flex flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all cursor-pointer",
+                    "flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all",
                     updatePolicy === "selective"
-                      ? "border-amber-500 bg-amber-500/5 ring-1 ring-amber-500 shadow-xs"
+                      ? "border-amber-500 bg-amber-500/5 shadow-xs ring-1 ring-amber-500"
                       : "border-border bg-card hover:bg-muted/40"
                   )}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-medium text-xs">
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
                       <SlidersHorizontal className="size-4 text-amber-500" />
                       Selective Cutoff
                     </span>
@@ -428,8 +439,9 @@ export const AddRelease: React.FC = () => {
                       Threshold
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Mandatory only for older builds strictly below a cutoff. Builds on or above cutoff receive a flexible prompt.
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Mandatory only for older builds strictly below a cutoff.
+                    Builds on or above cutoff receive a flexible prompt.
                   </p>
                 </button>
 
@@ -438,14 +450,14 @@ export const AddRelease: React.FC = () => {
                   type="button"
                   onClick={() => handlePolicyChange("global_force")}
                   className={cn(
-                    "flex flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all cursor-pointer",
+                    "flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3.5 text-left transition-all",
                     updatePolicy === "global_force"
-                      ? "border-destructive bg-destructive/5 ring-1 ring-destructive shadow-xs"
+                      ? "border-destructive bg-destructive/5 shadow-xs ring-1 ring-destructive"
                       : "border-border bg-card hover:bg-muted/40"
                   )}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-medium text-xs">
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
                       <AlertTriangle className="size-4 text-destructive" />
                       Global Mandatory
                     </span>
@@ -453,8 +465,9 @@ export const AddRelease: React.FC = () => {
                       Force All
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Blocks 100% of older builds immediately with an impassable upgrade screen. For breaking API changes or CVEs.
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Blocks 100% of older builds immediately with an impassable
+                    upgrade screen. For breaking API changes or CVEs.
                   </p>
                 </button>
               </div>
@@ -464,11 +477,16 @@ export const AddRelease: React.FC = () => {
                 <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
                     <Info className="size-4" />
-                    <span>Minimum Required Build Threshold (minBuildNumber)</span>
+                    <span>
+                      Minimum Required Build Threshold (minBuildNumber)
+                    </span>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="minBuildNumber" className="text-xs font-medium">
+                    <Label
+                      htmlFor="minBuildNumber"
+                      className="text-xs font-medium"
+                    >
                       Minimum Supported Build Integer *
                     </Label>
                     <Input
@@ -498,14 +516,23 @@ export const AddRelease: React.FC = () => {
                     </div>
                     {watchMinBuildNumber && watchMinBuildNumber > 0 ? (
                       <div className="space-y-2">
-                        {watchBuildNumber && watchMinBuildNumber >= watchBuildNumber && (
-                          <div className="rounded border border-destructive/30 bg-destructive/10 p-2 text-[10px] text-destructive font-medium">
-                            ⚠️ <strong>Invalid Threshold:</strong> Minimum build cutoff ({watchMinBuildNumber}) must be strictly less than target release build (#{watchBuildNumber}).
-                          </div>
-                        )}
+                        {watchBuildNumber &&
+                          watchMinBuildNumber >= watchBuildNumber && (
+                            <div className="rounded border border-destructive/30 bg-destructive/10 p-2 text-[10px] font-medium text-destructive">
+                              ⚠️ <strong>Invalid Threshold:</strong> Minimum
+                              build cutoff ({watchMinBuildNumber}) must be
+                              strictly less than target release build (#
+                              {watchBuildNumber}).
+                            </div>
+                          )}
                         {watchMinBuildNumber === 1 && (
                           <div className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-[10px] text-amber-700 dark:text-amber-300">
-                            💡 <strong>Note on build #1:</strong> Since mobile app builds start at integer 1, setting threshold to 1 means <strong>no builds are forced</strong> (all older builds receive optional updates). If you want build #1 to be forced, set this threshold to <strong>2</strong>.
+                            💡 <strong>Note on build #1:</strong> Since mobile
+                            app builds start at integer 1, setting threshold to
+                            1 means <strong>no builds are forced</strong> (all
+                            older builds receive optional updates). If you want
+                            build #1 to be forced, set this threshold to{" "}
+                            <strong>2</strong>.
                           </div>
                         )}
                         <ul className="space-y-1 text-muted-foreground">
@@ -526,10 +553,13 @@ export const AddRelease: React.FC = () => {
                           <li className="flex items-center gap-2">
                             <span className="inline-block size-2 shrink-0 rounded-full bg-emerald-500" />
                             <span>
-                              Builds <strong>&gt;= {watchMinBuildNumber}</strong>{" "}
-                              up to{" "}
+                              Builds{" "}
+                              <strong>&gt;= {watchMinBuildNumber}</strong> up to{" "}
                               <strong>
-                                #{(watchBuildNumber ? watchBuildNumber - 1 : 0) >= watchMinBuildNumber
+                                #
+                                {(watchBuildNumber
+                                  ? watchBuildNumber - 1
+                                  : 0) >= watchMinBuildNumber
                                   ? (watchBuildNumber || 1) - 1
                                   : watchMinBuildNumber}
                               </strong>
@@ -543,16 +573,21 @@ export const AddRelease: React.FC = () => {
                           <li className="flex items-center gap-2">
                             <span className="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" />
                             <span>
-                              Build <strong>#{watchBuildNumber || "?"}</strong>: Up to date (
-                              <code className="font-mono">updateType: "none"</code>
+                              Build <strong>#{watchBuildNumber || "?"}</strong>:
+                              Up to date (
+                              <code className="font-mono">
+                                updateType: "none"
+                              </code>
                               ).
                             </span>
                           </li>
                         </ul>
                       </div>
                     ) : (
-                      <p className="italic text-muted-foreground">
-                        Enter a minimum build integer above to preview which client builds are forced and which receive optional prompts.
+                      <p className="text-muted-foreground italic">
+                        Enter a minimum build integer above to preview which
+                        client builds are forced and which receive optional
+                        prompts.
                       </p>
                     )}
                   </div>
@@ -567,11 +602,13 @@ export const AddRelease: React.FC = () => {
                       Blanket Mandatory Upgrade Active
                     </span>
                     <p className="text-[11px] text-muted-foreground">
-                      All clients with build number strictly less than #{watchBuildNumber || "?"} will receive{" "}
+                      All clients with build number strictly less than #
+                      {watchBuildNumber || "?"} will receive{" "}
                       <code className="font-mono font-bold text-destructive">
                         updateType: "force"
                       </code>
-                      . The keyboard interface will be blocked until the update is installed.
+                      . The keyboard interface will be blocked until the update
+                      is installed.
                     </p>
                   </div>
                 </div>
@@ -581,8 +618,11 @@ export const AddRelease: React.FC = () => {
                 <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5 text-[11px] text-muted-foreground">
                   <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
                   <span>
-                    Clients below #{watchBuildNumber || "?"} will receive a dismissible update prompt (
-                    <code className="font-mono text-primary">updateType: "optional"</code>
+                    Clients below #{watchBuildNumber || "?"} will receive a
+                    dismissible update prompt (
+                    <code className="font-mono text-primary">
+                      updateType: "optional"
+                    </code>
                     ).
                   </span>
                 </div>

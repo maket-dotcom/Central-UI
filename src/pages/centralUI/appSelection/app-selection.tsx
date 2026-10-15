@@ -1,4 +1,6 @@
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Card,
   CardContent,
@@ -23,13 +25,21 @@ import { Settings, Plus, LogOut } from "lucide-react"
  */
 export default function AppSelectionPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const setSelectedApp = useAppStore((state) => state.setSelectedApp)
   const clearAuth = useAppStore((state) => state.clearAuth)
   const clearApp = useAppStore((state) => state.clearApp)
 
+  // Clear app workspace queries whenever returning to app catalog, keeping apps list cached
+  useEffect(() => {
+    queryClient.removeQueries({
+      predicate: (query) => query.queryKey[0] !== "apps",
+    })
+  }, [queryClient])
+
   const { data, isLoading, isError, error } = useGetApps()
 
-  // Set selected application in store and localStorage, then route to app dashboard
+  // Set selected application in store and sessionStorage, then route to app dashboard
   const handleSelectApp = (app: SelectedApp) => {
     setSelectedApp(app)
     navigate(`/${app.appName.toLowerCase()}/home`)
@@ -68,13 +78,11 @@ export default function AppSelectionPage() {
       ? (data.data as unknown as SelectedApp[])
       : []
 
-
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Top Utility Bar */}
       <header className="flex h-14 items-center justify-between border-b px-6">
-        <span className="font-semibold text-sm tracking-tight text-foreground">
+        <span className="text-sm font-semibold tracking-tight text-foreground">
           {appData.appName}
         </span>
         <div className="flex items-center gap-2">
@@ -105,7 +113,9 @@ export default function AppSelectionPage() {
       <main className="flex flex-1 flex-col items-center p-6 md:p-12">
         {/* Page Title */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{appData.appName}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {appData.appName}
+          </h1>
           <p className="mt-2 text-muted-foreground">Select an app to manage</p>
         </div>
 
@@ -119,7 +129,7 @@ export default function AppSelectionPage() {
               onClick={() => handleSelectApp(app)}
             >
               <CardHeader>
-                <CardTitle className="capitalize">{app.appName}</CardTitle>
+                <CardTitle>{app.appName}</CardTitle>
                 <CardDescription className="truncate font-mono text-xs">
                   {app.backendBaseUrl}
                 </CardDescription>
@@ -153,4 +163,3 @@ export default function AppSelectionPage() {
     </div>
   )
 }
-

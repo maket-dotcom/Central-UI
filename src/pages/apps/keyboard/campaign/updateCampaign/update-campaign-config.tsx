@@ -18,7 +18,7 @@ const UpdateCampaignContainer: React.FC = () => {
 };
 
 const UpdateCampaignConfig = {
-  path: "/keyboard/campaign/update/:id",
+  path: "update/:id",
   element: <UpdateCampaignContainer />,
 };
 

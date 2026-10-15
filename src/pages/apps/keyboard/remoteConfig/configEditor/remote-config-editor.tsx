@@ -40,7 +40,8 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
   isCreate = false,
 }) => {
   const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
+  const { id, appName } = useParams<{ id: string; appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const [searchParams] = useSearchParams()
   const cloneFromId = searchParams.get("cloneFrom")
   const [helpOpen, setHelpOpen] = useState(false)
@@ -99,7 +100,7 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
   const onSubmit = (formData: CreateRemoteConfigInputs) => {
     if (isCreate) {
       createMutation.mutate(formData, {
-        onSuccess: () => navigate("/keyboard/remote-config/list"),
+        onSuccess: () => navigate(`/${appSlug}/remote-config/list`),
       })
     } else if (id) {
       const updatePayload: UpdateRemoteConfigInputs = {
@@ -110,14 +111,14 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
       updateMutation.mutate(
         { id, body: updatePayload },
         {
-          onSuccess: () => navigate("/keyboard/remote-config/list"),
+          onSuccess: () => navigate(`/${appSlug}/remote-config/list`),
         }
       )
     }
   }
 
   const handleCancel = () => {
-    navigate("/keyboard/remote-config/list")
+    navigate(`/${appSlug}/remote-config/list`)
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
@@ -133,7 +134,7 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 w-full">
+    <div className="flex w-full flex-1 flex-col gap-6">
       {/* Header with back navigation and help */}
       <div className="flex items-center gap-4">
         <Button
@@ -156,7 +157,8 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
             </h1>
             {!isCreate && existingConfig && (
               <Badge variant="outline" className="font-mono text-xs capitalize">
-                {existingConfig.platform} • Build #{existingConfig.minBuildNumber}
+                {existingConfig.platform} • Build #
+                {existingConfig.minBuildNumber}
               </Badge>
             )}
           </div>
@@ -236,7 +238,7 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
                     )}
                   />
                 ) : (
-                  <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-xs capitalize text-muted-foreground">
+                  <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-xs text-muted-foreground capitalize">
                     {existingConfig?.platform} (Platform scope is immutable for
                     existing records)
                   </div>
@@ -286,8 +288,8 @@ export const RemoteConfigEditor: React.FC<RemoteConfigEditorProps> = ({
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Human-readable descriptor to identify this version tier in the admin
-              list
+              Human-readable descriptor to identify this version tier in the
+              admin list
             </CardDescription>
           </CardHeader>
           <CardContent>

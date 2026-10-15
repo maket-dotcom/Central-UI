@@ -18,7 +18,7 @@ const UpdateFeatureContainer: React.FC = () => {
 }
 
 const UpdateFeatureConfig = {
-  path: "/keyboard/features/update/:key",
+  path: "update/:key",
   element: <UpdateFeatureContainer />,
 }
 

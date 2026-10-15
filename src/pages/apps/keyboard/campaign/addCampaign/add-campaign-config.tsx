@@ -18,7 +18,7 @@ const AddCampaignContainer: React.FC = () => {
 }
 
 const AddCampaignConfig = {
-  path: "/keyboard/campaign/add",
+  path: "add",
   element: <AddCampaignContainer />,
 }
 

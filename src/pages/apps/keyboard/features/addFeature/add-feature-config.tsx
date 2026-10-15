@@ -18,7 +18,7 @@ const AddFeatureContainer: React.FC = () => {
 }
 
 const AddFeatureConfig = {
-  path: "/keyboard/features/add",
+  path: "add",
   element: <AddFeatureContainer />,
 }
 

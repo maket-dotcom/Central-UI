@@ -18,7 +18,7 @@ const ReleaseListContainer: React.FC = () => {
 }
 
 const ReleaseListConfig = {
-  path: "/keyboard/releases/list",
+  path: "list",
   element: <ReleaseListContainer />,
 }
 

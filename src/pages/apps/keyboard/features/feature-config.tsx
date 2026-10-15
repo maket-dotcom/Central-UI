@@ -4,19 +4,19 @@ import AddFeatureConfig from "./addFeature/add-feature-config"
 import UpdateFeatureConfig from "./updateFeature/update-feature-config"
 
 export const FeatureConfig = {
-  path: "/keyboard/features",
+  path: "features",
   title: "Feature Flags",
   children: [
     {
       index: true,
-      element: <Navigate to="/keyboard/features/list" replace />,
+      element: <Navigate to="list" replace />,
     },
     FeatureListConfig,
     AddFeatureConfig,
     UpdateFeatureConfig,
     {
       path: "*",
-      element: <Navigate to="/keyboard/features/list" replace />,
+      element: <Navigate to="../list" replace />,
     },
   ],
 }

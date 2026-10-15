@@ -398,7 +398,7 @@ export default function AppManagePage() {
                             <Globe className="size-4" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-foreground capitalize">
+                            <span className="font-semibold text-foreground">
                               {app.appName}
                             </span>
                             <span className="font-mono text-[10px] text-muted-foreground">

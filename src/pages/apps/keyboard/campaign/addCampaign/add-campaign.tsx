@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -31,6 +31,8 @@ import { getFirstFormErrorMessage } from "@/utils/formUtils"
 
 export default function AddCampaign() {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const [mediaResp, setMediaResp] = useState<MediaResponse | null>(null)
 
   const { mutate, isPending } = useCreateCampaign()
@@ -65,7 +67,10 @@ export default function AddCampaign() {
 
   const watchedIcon = watch("icon")
   const watchedStatus = watch("status")
-  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<string, unknown>
+  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<
+    string,
+    unknown
+  >
 
   // Sync uploaded media into form icon object
   useEffect(() => {
@@ -153,7 +158,7 @@ export default function AddCampaign() {
       { body: payload },
       {
         onSuccess: () => {
-          navigate("/keyboard/campaign/list")
+          navigate(`/${appSlug}/campaign/list`)
         },
       }
     )
@@ -165,11 +170,11 @@ export default function AddCampaign() {
     if (sessionMediaId) {
       deleteMediaMutate({ id: sessionMediaId }, {})
     }
-    navigate("/keyboard/campaign/list")
+    navigate(`/${appSlug}/campaign/list`)
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 w-full">
+    <div className="flex w-full flex-1 flex-col gap-6">
       {/* Header with back navigation */}
       <div className="flex items-center gap-4">
         <Button
@@ -186,8 +191,8 @@ export default function AddCampaign() {
             Create New Campaign
           </h1>
           <p className="text-sm text-balance text-muted-foreground">
-            Configure promoted shortcut suggestions, platform-specific
-            targets, and icon assets
+            Configure promoted shortcut suggestions, platform-specific targets,
+            and icon assets
           </p>
         </div>
       </div>
@@ -409,7 +414,8 @@ export default function AddCampaign() {
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Optional arbitrary JSON payload metadata for custom keyboard properties
+              Optional arbitrary JSON payload metadata for custom keyboard
+              properties
             </CardDescription>
           </CardHeader>
           <CardContent>

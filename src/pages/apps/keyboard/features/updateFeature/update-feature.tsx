@@ -10,7 +10,8 @@ import type { CreateFeatureInputs } from "@/utils/schemas/keyboard/featureSchema
 
 export const UpdateFeature: React.FC = () => {
   const navigate = useNavigate()
-  const { key } = useParams<{ key: string }>()
+  const { key, appName } = useParams<{ key: string; appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
 
   const {
     data: featureResp,
@@ -32,14 +33,14 @@ export const UpdateFeature: React.FC = () => {
       { key, body: bodyWithoutKey },
       {
         onSuccess: () => {
-          navigate("/keyboard/features/list")
+          navigate(`/${appSlug}/features/list`)
         },
       }
     )
   }
 
   const handleCancel = () => {
-    navigate("/keyboard/features/list")
+    navigate(`/${appSlug}/features/list`)
   }
 
   if (isLoading) {

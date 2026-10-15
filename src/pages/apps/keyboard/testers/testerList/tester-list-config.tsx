@@ -18,7 +18,7 @@ const TesterListContainer: React.FC = () => {
 }
 
 const TesterListConfig = {
-  path: "/keyboard/testers",
+  path: "list",
   element: <TesterListContainer />,
 }
 

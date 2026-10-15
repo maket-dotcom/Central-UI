@@ -18,7 +18,7 @@ const AddReleaseContainer: React.FC = () => {
 }
 
 const AddReleaseConfig = {
-  path: "/keyboard/releases/add",
+  path: "add",
   element: <AddReleaseContainer />,
 }
 

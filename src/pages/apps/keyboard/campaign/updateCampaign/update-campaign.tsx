@@ -35,13 +35,18 @@ import { JsonEditorComponent } from "@/components/inputComponents/json-editor-co
 import { getFirstFormErrorMessage } from "@/utils/formUtils"
 
 export default function UpdateCampaign() {
-  const { id } = useParams<{ id: string }>()
+  const { id, appName } = useParams<{ id: string; appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
   const navigate = useNavigate()
   const [mediaResp, setMediaResp] = useState<MediaResponse | null>(null)
 
   const [isIconRemoved, setIsIconRemoved] = useState<boolean>(false)
 
-  const { data: campaignResp, isLoading, isError } = useGetCampaignById(id || "")
+  const {
+    data: campaignResp,
+    isLoading,
+    isError,
+  } = useGetCampaignById(id || "")
   const { mutate, isPending } = useUpdateCampaign()
   const { mutate: deleteMediaMutate } = useDeleteMediaById()
 
@@ -83,7 +88,10 @@ export default function UpdateCampaign() {
 
   const watchedIcon = watch("icon")
   const watchedStatus = watch("status")
-  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<string, unknown>
+  const watchedExtras = (useWatch({ control, name: "extras" }) || {}) as Record<
+    string,
+    unknown
+  >
 
   // Hydrate form when campaign data loads
   useEffect(() => {
@@ -202,7 +210,7 @@ export default function UpdateCampaign() {
           ) {
             deleteMediaMutate({ id: previousMediaId }, {})
           }
-          navigate("/keyboard/campaign/list")
+          navigate(`/${appSlug}/campaign/list`)
         },
       }
     )
@@ -218,7 +226,7 @@ export default function UpdateCampaign() {
     ) {
       deleteMediaMutate({ id: sessionMediaId }, {})
     }
-    navigate("/keyboard/campaign/list")
+    navigate(`/${appSlug}/campaign/list`)
   }
 
   if (isLoading) {
@@ -234,7 +242,7 @@ export default function UpdateCampaign() {
 
   if (isError || !campaign) {
     return (
-      <div className="flex flex-1 flex-col gap-6 w-full">
+      <div className="flex w-full flex-1 flex-col gap-6">
         <div className="overflow-hidden rounded-xl border border-destructive/30 bg-destructive/10 p-8 text-center">
           <h2 className="text-base font-semibold text-destructive">
             Campaign Not Found
@@ -256,7 +264,7 @@ export default function UpdateCampaign() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 w-full">
+    <div className="flex w-full flex-1 flex-col gap-6">
       {/* Header with back navigation */}
       <div className="flex items-center gap-4">
         <Button
@@ -276,7 +284,7 @@ export default function UpdateCampaign() {
             {campaign.status && (
               <Badge
                 variant={campaign.status === "active" ? "default" : "secondary"}
-                className="capitalize text-xs"
+                className="text-xs capitalize"
               >
                 {campaign.status}
               </Badge>
@@ -535,7 +543,8 @@ export default function UpdateCampaign() {
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Optional arbitrary JSON payload metadata for custom keyboard properties
+              Optional arbitrary JSON payload metadata for custom keyboard
+              properties
             </CardDescription>
           </CardHeader>
           <CardContent>

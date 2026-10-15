@@ -4,19 +4,19 @@ import AddCampaignConfig from "./addCampaign/add-campaign-config"
 import UpdateCampaignConfig from "./updateCampaign/update-campaign-config"
 
 const CampaignConfig = {
-  path: "/keyboard/campaign",
+  path: "campaign",
   title: "Campaign",
   children: [
     {
       index: true,
-      element: <Navigate to="/keyboard/campaign/list" replace />,
+      element: <Navigate to="list" replace />,
     },
     CampaignListConfig,
     AddCampaignConfig,
     UpdateCampaignConfig,
     {
       path: "*",
-      element: <Navigate to="/keyboard/campaign/list" replace />,
+      element: <Navigate to="../list" replace />,
     },
   ],
 }

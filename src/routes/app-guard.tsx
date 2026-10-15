@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Navigate } from "react-router-dom"
+import { Navigate, useParams } from "react-router-dom"
 import { useAppStore } from "@/store"
 import { useGetApps } from "@/query/useAppInfo"
 import { Loader2 } from "lucide-react"
@@ -7,16 +7,16 @@ import type { SelectedApp } from "@/store/slices/AppSlice"
 
 interface AppGuardProps {
   children: React.ReactNode
-  expectedAppName: string
 }
 
 /**
- * Route protection guard for app-scoped routes.
- * Ensures an application is actively selected and verifies that the selected
- * application in state matches the expected application for this route.
- * Hydrates from the backend API if accessed directly in a new tab.
+ * Route protection guard for dynamic app-scoped routes (/:appName/*).
+ * Reads the application slug directly from URL route parameters.
+ * Automatically resolves and hydrates the exact matching application from
+ * Central-Backend into state and sessionStorage on direct deep-link or new tab.
  */
-export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
+export default function AppGuard({ children }: AppGuardProps) {
+  const { appName: routeAppName } = useParams<{ appName: string }>()
   const selectedApp = useAppStore((state) => state.selectedApp)
   const setSelectedApp = useAppStore((state) => state.setSelectedApp)
   const { data: appsData, isLoading } = useGetApps()
@@ -28,23 +28,30 @@ export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
       ? (appsData.data as unknown as SelectedApp[])
       : []
 
-
-
-  // If we have API data, try to find the expected app
-  const foundApp = appsList.find(
-    (a: SelectedApp) =>
-      a.appName.toLowerCase() === expectedAppName.toLowerCase()
+  // Strict exact match against registered backend applications (case-insensitive)
+  const cleanRouteName = routeAppName?.toLowerCase() || ""
+  const targetApp = appsList.find(
+    (a: SelectedApp) => a.appName.toLowerCase() === cleanRouteName
   )
 
-  // Attempt to hydrate the active app from API data if it's missing from memory
+  // Synchronize the URL's app into Zustand and sessionStorage
   useEffect(() => {
-    if (!selectedApp && foundApp) {
-      setSelectedApp(foundApp)
+    if (
+      targetApp &&
+      (!selectedApp ||
+        selectedApp.appName.toLowerCase() !== targetApp.appName.toLowerCase())
+    ) {
+      setSelectedApp(targetApp)
     }
-  }, [selectedApp, foundApp, setSelectedApp])
+  }, [targetApp, selectedApp, setSelectedApp])
 
-  // While apps are being fetched to rehydrate, OR if we found the app but haven't synced to Zustand yet, show a loading state
-  if (!selectedApp && (isLoading || foundApp)) {
+  // While apps are being queried or syncing into store, present loading state
+  if (
+    isLoading ||
+    (targetApp &&
+      (!selectedApp ||
+        selectedApp.appName.toLowerCase() !== targetApp.appName.toLowerCase()))
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -52,16 +59,9 @@ export default function AppGuard({ children, expectedAppName }: AppGuardProps) {
     )
   }
 
-  // If no app is selected after loading AND it wasn't found in the API response, redirect to app catalog
-  if (!selectedApp) {
+  // If query completed and no matching app was found in Central database, redirect to catalog
+  if (!isLoading && !targetApp) {
     return <Navigate to="/apps" replace />
-  }
-
-  // If the currently selected app doesn't match the route's expected app, redirect to actual selected app root
-  if (expectedAppName.toLowerCase() !== selectedApp.appName.toLowerCase()) {
-    return (
-      <Navigate to={`/${selectedApp.appName.toLowerCase()}/home`} replace />
-    )
   }
 
   return <>{children}</>

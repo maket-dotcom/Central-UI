@@ -18,7 +18,7 @@ const RemoteConfigListContainer: React.FC = () => {
 }
 
 const RemoteConfigListConfig = {
-  path: "/keyboard/remote-config/list",
+  path: "list",
   element: <RemoteConfigListContainer />,
 }
 

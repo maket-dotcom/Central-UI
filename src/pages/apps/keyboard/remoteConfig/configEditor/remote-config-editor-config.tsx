@@ -32,11 +32,11 @@ const EditConfigContainer: React.FC = () => {
 }
 
 export const RemoteConfigCreateConfig = {
-  path: "/keyboard/remote-config/create",
+  path: "create",
   element: <CreateConfigContainer />,
 }
 
 export const RemoteConfigEditConfig = {
-  path: "/keyboard/remote-config/edit/:id",
+  path: "edit/:id",
   element: <EditConfigContainer />,
 }

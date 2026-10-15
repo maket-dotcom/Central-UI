@@ -25,6 +25,7 @@ import { appData } from "@/app/appData"
 export default function LoginPage() {
   const [token, setToken] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
   const navigate = useNavigate()
   const tokenStore = useAppStore((state) => state.token)
   const setTokenStore = useAppStore((state) => state.setToken)
@@ -35,7 +36,7 @@ export default function LoginPage() {
 
   // If already authenticated, skip login and go to app selection
   // MUST be below all hooks to satisfy Rules of Hooks
-  if (tokenStore) {
+  if (tokenStore && !isVerifying) {
     return <Navigate to="/apps" replace />
   }
 
@@ -47,18 +48,23 @@ export default function LoginPage() {
       return
     }
 
+    setIsVerifying(true)
     // Set token before refetch so centralInstance request interceptor attaches it
     setTokenStore(trimmedToken)
 
-    // Verify token by fetching apps through React Query; refetch() returns the query result
-    const { isSuccess, error } = await refetch()
-    if (isSuccess) {
-      toast.success("Login successful")
-      navigate("/apps")
-    } else {
-      // Clear token since verification failed
-      clearAuth()
-      toast.error(getErrorMessage(error))
+    try {
+      // Verify token by fetching apps through React Query; refetch() returns the query result
+      const { isSuccess, error } = await refetch()
+      if (isSuccess) {
+        toast.success("Login successful")
+        navigate("/apps")
+      } else {
+        // Clear token since verification failed
+        clearAuth()
+        toast.error(getErrorMessage(error))
+      }
+    } finally {
+      setIsVerifying(false)
     }
   }
 

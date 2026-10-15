@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
 import { loginConfig } from "@/pages/centralUI/auth/login-config"
 import { CentralAppRoutes } from "@/pages/centralUI/central-ui-routes"
-import { KeyboardAppRoutes } from "@/pages/apps/keyboard/keyboard-routes"
+import { AppWorkspaceRoutes } from "@/routes/app-workspace-routes"
 
 /**
  * Application routing configuration using React Router DOM.
@@ -15,9 +15,8 @@ export const router = createBrowserRouter([
   // Central Platform Routes (/apps, /apps/manage)
   CentralAppRoutes,
 
-  // App-Scoped Routes (/keyboard/*)
-  KeyboardAppRoutes,
-  // Future apps will be added here (e.g., VanshavaliAppRoutes)
+  // App-Scoped Routes (/:appName/*)
+  AppWorkspaceRoutes,
 
   // Fallback Redirects
   // If a user navigates to the root URL or an unknown route:

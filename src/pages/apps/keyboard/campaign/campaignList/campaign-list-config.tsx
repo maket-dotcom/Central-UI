@@ -1,25 +1,25 @@
-import React, { Suspense } from "react";
-import Loader from "@/components/loader";
+import React, { Suspense } from "react"
+import Loader from "@/components/loader"
 
-const CampaignList = React.lazy(() => import("./campaign-list"));
+const CampaignList = React.lazy(() => import("./campaign-list"))
 
 const CampaignListContainer: React.FC = () => {
   return (
-    <Suspense 
+    <Suspense
       fallback={
-        <div className="flex flex-1 items-center justify-center min-h-[50vh]">
+        <div className="flex min-h-[50vh] flex-1 items-center justify-center">
           <Loader size={32} />
         </div>
       }
     >
       <CampaignList />
     </Suspense>
-  );
-};
+  )
+}
 
 const CampaignListConfig = {
-  path: "/keyboard/campaign/list",
+  path: "list",
   element: <CampaignListContainer />,
-};
+}
 
-export default CampaignListConfig;
+export default CampaignListConfig

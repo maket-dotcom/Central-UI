@@ -18,7 +18,7 @@ const FeatureListContainer: React.FC = () => {
 }
 
 const FeatureListConfig = {
-  path: "/keyboard/features/list",
+  path: "list",
   element: <FeatureListContainer />,
 }
 

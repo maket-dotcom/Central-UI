@@ -7,6 +7,6 @@ export const keyboardHomeConfig = {
   /** Page title for header breadcrumbs and tabs */
   title: "Home",
   /** Route path relative to the app base */
-  path: "/keyboard/home",
+  path: "home",
   element: <KeyboardHomePage />,
 }

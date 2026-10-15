@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Plus,
   RefreshCw,
@@ -47,6 +47,8 @@ import { RemoteConfigHelpDrawer } from "../components/remote-config-help-drawer"
 
 export const RemoteConfigList: React.FC = () => {
   const navigate = useNavigate()
+  const { appName } = useParams<{ appName: string }>()
+  const appSlug = appName?.toLowerCase() || "keyboard"
 
   // Filter States
   const [platformFilter, setPlatformFilter] = useState<string>("all")
@@ -116,11 +118,8 @@ export const RemoteConfigList: React.FC = () => {
   }, [configs, searchQuery])
 
   // Client-side sorting via useTableSort
-  const { sortedItems, sortConfig, requestSort } = useTableSort<RemoteConfigDoc>(
-    filteredConfigs,
-    "minBuildNumber",
-    "desc"
-  )
+  const { sortedItems, sortConfig, requestSort } =
+    useTableSort<RemoteConfigDoc>(filteredConfigs, "minBuildNumber", "desc")
 
   const renderSortIcon = (key: keyof RemoteConfigDoc) => {
     if (sortConfig.key !== key) {
@@ -174,7 +173,7 @@ export const RemoteConfigList: React.FC = () => {
               className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button onClick={() => navigate("/keyboard/remote-config/create")}>
+          <Button onClick={() => navigate(`/${appSlug}/remote-config/create`)}>
             <Plus className="mr-2 h-4 w-4" /> New Configuration
           </Button>
         </div>
@@ -233,7 +232,9 @@ export const RemoteConfigList: React.FC = () => {
                 </div>
               </TableHead>
               <TableHead className="font-semibold">Active Window</TableHead>
-              <TableHead className="font-semibold">Release Note / Tag</TableHead>
+              <TableHead className="font-semibold">
+                Release Note / Tag
+              </TableHead>
               <TableHead className="font-semibold">Keys Count</TableHead>
               <TableHead
                 className="cursor-pointer font-semibold transition-colors select-none hover:text-foreground"
@@ -244,7 +245,9 @@ export const RemoteConfigList: React.FC = () => {
                   {renderSortIcon("createdAt")}
                 </div>
               </TableHead>
-              <TableHead className="text-right font-semibold">Actions</TableHead>
+              <TableHead className="text-right font-semibold">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -279,7 +282,7 @@ export const RemoteConfigList: React.FC = () => {
                         size="sm"
                         className="mt-2"
                         onClick={() =>
-                          navigate("/keyboard/remote-config/create")
+                          navigate(`/${appSlug}/remote-config/create`)
                         }
                       >
                         <Plus className="mr-1.5 h-3.5 w-3.5" /> Create your
@@ -371,7 +374,7 @@ export const RemoteConfigList: React.FC = () => {
                           <DropdownMenuItem
                             onClick={() =>
                               navigate(
-                                `/keyboard/remote-config/edit/${config._id}`
+                                `/${appSlug}/remote-config/edit/${config._id}`
                               )
                             }
                             className="cursor-pointer"
@@ -381,7 +384,7 @@ export const RemoteConfigList: React.FC = () => {
                           <DropdownMenuItem
                             onClick={() =>
                               navigate(
-                                `/keyboard/remote-config/create?cloneFrom=${config._id}`
+                                `/${appSlug}/remote-config/create?cloneFrom=${config._id}`
                               )
                             }
                             className="cursor-pointer"

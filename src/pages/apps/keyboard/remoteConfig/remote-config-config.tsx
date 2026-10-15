@@ -6,19 +6,19 @@ import {
 } from "./configEditor/remote-config-editor-config"
 
 export const RemoteConfigConfig = {
-  path: "/keyboard/remote-config",
+  path: "remote-config",
   title: "Remote Config",
   children: [
     {
       index: true,
-      element: <Navigate to="/keyboard/remote-config/list" replace />,
+      element: <Navigate to="list" replace />,
     },
     RemoteConfigListConfig,
     RemoteConfigCreateConfig,
     RemoteConfigEditConfig,
     {
       path: "*",
-      element: <Navigate to="/keyboard/remote-config/list" replace />,
+      element: <Navigate to="../list" replace />,
     },
   ],
 }
