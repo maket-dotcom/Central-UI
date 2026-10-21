@@ -11,8 +11,8 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Retry failed requests once before presenting error state
       retry: 1,
-      // Cache data as fresh for 5 minutes
-      staleTime: 5 * 60 * 1000,
+      // Instantly marks data as stale
+      staleTime: 0,
     },
   },
 })
