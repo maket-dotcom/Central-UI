@@ -7,6 +7,7 @@ import {
   addApp,
   updateApp,
   deleteApp,
+  uploadCentralMedia,
 } from "@/services/appInfo"
 import type {
   AddAppInputs,
@@ -95,3 +96,19 @@ export const useDeleteApp = () => {
     },
   })
 }
+
+
+export const useUploadCentralMedia = () => {
+  return useMutation({
+    mutationFn: (payload: {
+      image: File
+      name?: string
+      type?: string
+      parentId?: string
+    }) => uploadCentralMedia(payload),
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error))
+    },
+  })
+}
+

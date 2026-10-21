@@ -45,9 +45,23 @@ export function SiteHeader() {
         <Separator orientation="vertical" className="h-4 mx-1" />
 
         {/* Dynamic page breadcrumb heading */}
-        <h1 className="text-sm font-semibold tracking-tight text-foreground">
-          {currentPageTitle}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-sm font-semibold tracking-tight text-foreground">
+            {currentPageTitle}
+          </h1>
+          {selectedApp?.appName && (
+            <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+              {selectedApp.logo?.link ? (
+                <img
+                  src={selectedApp.logo.link}
+                  alt={selectedApp.appName}
+                  className="size-3.5 rounded-full object-cover"
+                />
+              ) : null}
+              <span className="font-medium capitalize">{selectedApp.appName}</span>
+            </div>
+          )}
+        </div>
 
         {/* Right action controls */}
         <div className="ml-auto flex items-center gap-2">

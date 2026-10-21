@@ -21,6 +21,7 @@ import {
   type AppInfo,
   type AddAppInputs,
 } from "@/utils/schemas/appInfoSchema"
+import CentralSingleDropBox from "./central-single-drop-box"
 
 interface AppDialogProps {
   open: boolean
@@ -45,14 +46,19 @@ export const AppDialog: React.FC<AppDialogProps> = ({
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<AddAppInputs>({
     resolver: zodResolver(addAppSchema),
     defaultValues: {
       appName: "",
       backendBaseUrl: "",
+      logo: null,
     },
   })
+
+  const currentLogo = watch("logo")
 
   // Sync initial values into form on open or target change
   useEffect(() => {
@@ -61,11 +67,19 @@ export const AppDialog: React.FC<AppDialogProps> = ({
         reset({
           appName: app.appName,
           backendBaseUrl: app.backendBaseUrl,
+          logo: app.logo
+            ? {
+                id: app.logo.id,
+                link: app.logo.link,
+                type: app.logo.type || "logo",
+              }
+            : null,
         })
       } else {
         reset({
           appName: "",
           backendBaseUrl: "",
+          logo: null,
         })
       }
     }
@@ -74,6 +88,14 @@ export const AppDialog: React.FC<AppDialogProps> = ({
   const onSubmit = (data: AddAppInputs) => {
     const trimmedAppName = data.appName.trim()
     const trimmedUrl = data.backendBaseUrl.trim().replace(/\/+$/, "")
+    const logoPayload =
+      data.logo && data.logo.id && data.logo.link
+        ? {
+            id: String(data.logo.id),
+            link: String(data.logo.link),
+            type: data.logo.type ? String(data.logo.type) : "logo",
+          }
+        : null
 
     if (isEditing && app) {
       updateAppMutation.mutate(
@@ -82,6 +104,7 @@ export const AppDialog: React.FC<AppDialogProps> = ({
           body: {
             appName: trimmedAppName,
             backendBaseUrl: trimmedUrl,
+            logo: logoPayload,
           },
         },
         {
@@ -98,6 +121,7 @@ export const AppDialog: React.FC<AppDialogProps> = ({
           body: {
             appName: trimmedAppName,
             backendBaseUrl: trimmedUrl,
+            logo: logoPayload,
           },
         },
         {
@@ -113,7 +137,7 @@ export const AppDialog: React.FC<AppDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing
@@ -122,7 +146,7 @@ export const AppDialog: React.FC<AppDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? `Update metadata and backend service URL for ${app?.appName}.`
+              ? `Update metadata, logo, and backend service URL for ${app?.appName}.`
               : "Register a new application workspace in Central-Backend."}
           </DialogDescription>
         </DialogHeader>
@@ -136,6 +160,48 @@ export const AppDialog: React.FC<AppDialogProps> = ({
           })}
           className="flex flex-col gap-4 py-2"
         >
+          {/* App Logo */}
+          <div className="grid gap-2">
+            <Label htmlFor="appLogo">App Logo *</Label>
+            <CentralSingleDropBox
+              id="appLogo"
+              type={"logo" as any}
+              previousMediaId={currentLogo?.id || undefined}
+              previousMediaLink={currentLogo?.link}
+              setMediaResp={(resp) => {
+                const mediaObj = (resp as any)?.data?.data || resp?.data
+                const mediaId = mediaObj?._id || mediaObj?.id
+                const mediaLink = mediaObj?.url || mediaObj?.link
+
+                if (mediaId && mediaLink) {
+                  setValue(
+                    "logo",
+                    {
+                      id: String(mediaId),
+                      link: String(mediaLink),
+                      type: mediaObj?.type || "logo",
+                    },
+                    { shouldValidate: true }
+                  )
+                } else {
+                  setValue("logo", null, { shouldValidate: true })
+                }
+              }}
+              onRemove={() => {
+                setValue("logo", null, { shouldValidate: true })
+              }}
+            />
+            {errors.logo ? (
+              <p className="text-xs font-semibold text-destructive">
+                {errors.logo.message || "App logo is required"}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Application logo is required (PNG, JPEG, WebP, GIF, max 2MB).
+              </p>
+            )}
+          </div>
+
           {/* App Name */}
           <div className="grid gap-2">
             <Label htmlFor="appName">App Name *</Label>

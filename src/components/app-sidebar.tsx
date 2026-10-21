@@ -50,8 +50,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton
               render={
                 <Link to="/apps" className="flex items-center gap-2">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <LayoutGrid className="size-4" />
+                  <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground">
+                    {selectedApp?.logo?.link ? (
+                      <img
+                        src={selectedApp.logo.link}
+                        alt={selectedApp.appName}
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none"
+                        }}
+                      />
+                    ) : (
+                      <LayoutGrid className="size-4" />
+                    )}
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold text-sm">

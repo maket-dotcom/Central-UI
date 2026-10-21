@@ -16,7 +16,7 @@ import { useGetApps } from "@/query/useAppInfo"
 import { useAppStore } from "@/store"
 import type { SelectedApp } from "@/store/slices/AppSlice"
 import { appData } from "@/app/appData"
-import { Settings, Plus, LogOut } from "lucide-react"
+import { Settings, Plus, LogOut, Globe } from "lucide-react"
 
 /**
  * Application selection catalog page.
@@ -128,11 +128,27 @@ export default function AppSelectionPage() {
               className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:border-primary/50 hover:shadow-lg"
               onClick={() => handleSelectApp(app)}
             >
-              <CardHeader>
-                <CardTitle>{app.appName}</CardTitle>
-                <CardDescription className="truncate font-mono text-xs">
-                  {app.backendBaseUrl}
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center gap-3.5 space-y-0">
+                <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
+                  {app.logo?.link ? (
+                    <img
+                      src={app.logo.link}
+                      alt={app.appName}
+                      className="size-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none"
+                      }}
+                    />
+                  ) : (
+                    <Globe className="size-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col overflow-hidden">
+                  <CardTitle className="truncate text-base">{app.appName}</CardTitle>
+                  <CardDescription className="truncate font-mono text-xs">
+                    {app.backendBaseUrl}
+                  </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 <Badge

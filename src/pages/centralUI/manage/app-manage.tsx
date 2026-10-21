@@ -394,8 +394,19 @@ export default function AppManagePage() {
                       {/* App Name */}
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div className="flex size-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <Globe className="size-4" />
+                          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted/30 text-primary">
+                            {app.logo?.link ? (
+                              <img
+                                src={app.logo.link}
+                                alt={app.appName}
+                                className="size-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = "none"
+                                }}
+                              />
+                            ) : (
+                              <Globe className="size-4" />
+                            )}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-semibold text-foreground">

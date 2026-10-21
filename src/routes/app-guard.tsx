@@ -39,7 +39,7 @@ export default function AppGuard({ children }: AppGuardProps) {
     if (
       targetApp &&
       (!selectedApp ||
-        selectedApp.appName.toLowerCase() !== targetApp.appName.toLowerCase())
+        selectedApp.appName.toLowerCase() !== targetApp.appName.toLowerCase() || selectedApp.logo?.link !== targetApp.logo?.link)
     ) {
       setSelectedApp(targetApp)
     }

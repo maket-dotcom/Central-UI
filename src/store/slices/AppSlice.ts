@@ -8,6 +8,11 @@ export interface SelectedApp {
   appName: string
   backendBaseUrl: string
   status: string
+  logo?: {
+    id: string
+    link: string
+    type?: string
+  } | null
 }
 
 /**
