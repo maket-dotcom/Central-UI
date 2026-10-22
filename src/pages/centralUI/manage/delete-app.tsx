@@ -48,7 +48,7 @@ export const DeleteAppDialog: React.FC<DeleteAppDialogProps> = ({
           <DialogTitle>Delete Application</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete{" "}
-            <strong className="text-foreground capitalize">
+            <strong className="text-foreground">
               {app.appName}
             </strong>
             ? This will mark the application as deleted in Central-Backend. The

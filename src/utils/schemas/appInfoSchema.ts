@@ -2,8 +2,6 @@ import { z } from "zod"
 
 export interface AppTheme {
   primary: string
-  secondary?: string
-  tertiary?: string
 }
 
 export interface AppLogo {
@@ -93,18 +91,6 @@ export const appThemeSchema = z
       .string()
       .trim()
       .regex(hexColorRegex, "Primary must be a valid HEX color (e.g. #059669)"),
-    secondary: z
-      .string()
-      .trim()
-      .regex(hexColorRegex, "Secondary must be a valid HEX color")
-      .optional()
-      .nullable(),
-    tertiary: z
-      .string()
-      .trim()
-      .regex(hexColorRegex, "Tertiary must be a valid HEX color")
-      .optional()
-      .nullable(),
   })
   .optional()
   .nullable()

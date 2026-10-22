@@ -159,23 +159,11 @@ export default function AppSelectionPage() {
                   {app.status}
                 </Badge>
                 {app.theme?.primary && (
-                  <div className="flex items-center gap-1" title="App Theme Colors">
+                  <div className="flex items-center" title="Brand Color">
                     <span
                       className="size-3 rounded-full border border-background shadow-xs"
                       style={{ backgroundColor: app.theme.primary }}
                     />
-                    {app.theme.secondary && (
-                      <span
-                        className="size-2.5 rounded-full border border-background shadow-xs"
-                        style={{ backgroundColor: app.theme.secondary }}
-                      />
-                    )}
-                    {app.theme.tertiary && (
-                      <span
-                        className="size-2 rounded-full border border-background shadow-xs"
-                        style={{ backgroundColor: app.theme.tertiary }}
-                      />
-                    )}
                   </div>
                 )}
               </CardContent>

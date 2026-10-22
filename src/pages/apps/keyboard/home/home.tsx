@@ -14,9 +14,7 @@ import { useAppStore } from "@/store"
  */
 export default function KeyboardHomePage() {
   const selectedApp = useAppStore((state) => state.selectedApp)
-  const appDisplayName = selectedApp?.appName
-    ? selectedApp.appName.charAt(0).toUpperCase() + selectedApp.appName.slice(1)
-    : "Keyboard"
+  const appDisplayName = selectedApp?.appName || "Keyboard"
 
   return (
     <div className="flex flex-1 flex-col gap-6">

@@ -167,8 +167,8 @@ export const AppDialog: React.FC<AppDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? `Update metadata, logo, brand colors, and backend URL for ${app?.appName}.`
-              : "Register a new application workspace with custom logo and 3 brand colors."}
+              ? `Update metadata, logo, brand color, and backend URL for ${app?.appName}.`
+              : "Register a new application workspace with custom logo and brand color."}
           </DialogDescription>
         </DialogHeader>
 

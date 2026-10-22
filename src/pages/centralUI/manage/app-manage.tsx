@@ -419,23 +419,11 @@ export default function AppManagePage() {
                                 {app.appName}
                               </span>
                               {app.theme?.primary && (
-                                <div className="flex items-center gap-1" title="App Theme (Primary / Secondary / Tertiary)">
+                                <div className="flex items-center" title="App Brand Color">
                                   <span
                                     className="size-2.5 rounded-full border border-background shadow-xs"
                                     style={{ backgroundColor: app.theme.primary }}
                                   />
-                                  {app.theme.secondary && (
-                                    <span
-                                      className="size-2 rounded-full border border-background shadow-xs"
-                                      style={{ backgroundColor: app.theme.secondary }}
-                                    />
-                                  )}
-                                  {app.theme.tertiary && (
-                                    <span
-                                      className="size-2 rounded-full border border-background shadow-xs"
-                                      style={{ backgroundColor: app.theme.tertiary }}
-                                    />
-                                  )}
                                 </div>
                               )}
                             </div>

@@ -58,7 +58,7 @@ export function SiteHeader() {
                   className="size-3.5 rounded-full object-cover"
                 />
               ) : null}
-              <span className="font-medium capitalize">{selectedApp.appName}</span>
+              <span className="font-medium">{selectedApp.appName}</span>
             </div>
           )}
         </div>

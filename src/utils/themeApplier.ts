@@ -208,6 +208,12 @@ export function applyAppTheme(theme?: AppThemeConfig | null) {
   --primary-foreground: var(--sidebar-accent-foreground);
 }
 
+[data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover,
+[data-sidebar="sidebar"] [data-sidebar="menu-button"][data-state="open"],
+[data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
+  --muted-foreground: color-mix(in srgb, var(--sidebar-accent-foreground) 75%, transparent);
+}
+
 .dark {
   --primary: ${primary};
   --primary-foreground: ${primaryFg};
@@ -230,6 +236,12 @@ export function applyAppTheme(theme?: AppThemeConfig | null) {
   --muted-foreground: color-mix(in srgb, var(--sidebar-foreground) 75%, transparent);
   --primary: var(--sidebar-accent);
   --primary-foreground: var(--sidebar-accent-foreground);
+}
+
+.dark [data-sidebar="sidebar"] [data-sidebar="menu-button"]:hover,
+.dark [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-state="open"],
+.dark [data-sidebar="sidebar"] [data-sidebar="menu-button"][data-active="true"] {
+  --muted-foreground: color-mix(in srgb, var(--sidebar-accent-foreground) 75%, transparent);
 }
 `
 
