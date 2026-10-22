@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Loader from "@/components/loader"
 import SelectComponent from "@/components/inputComponents/select-component"
+import { resetAppTheme } from "@/utils/themeApplier"
 import { ModeToggle } from "@/components/mode-toggle"
 import { appData } from "@/app/appData"
 
@@ -58,6 +59,10 @@ import DeleteAppDialog from "./delete-app"
 
 export default function AppManagePage() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    resetAppTheme()
+  }, [])
   const setSelectedApp = useAppStore((state) => state.setSelectedApp)
   const clearAuth = useAppStore((state) => state.clearAuth)
   const clearApp = useAppStore((state) => state.clearApp)
@@ -409,9 +414,31 @@ export default function AppManagePage() {
                             )}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-semibold text-foreground">
-                              {app.appName}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground">
+                                {app.appName}
+                              </span>
+                              {app.theme?.primary && (
+                                <div className="flex items-center gap-1" title="App Theme (Primary / Secondary / Tertiary)">
+                                  <span
+                                    className="size-2.5 rounded-full border border-background shadow-xs"
+                                    style={{ backgroundColor: app.theme.primary }}
+                                  />
+                                  {app.theme.secondary && (
+                                    <span
+                                      className="size-2 rounded-full border border-background shadow-xs"
+                                      style={{ backgroundColor: app.theme.secondary }}
+                                    />
+                                  )}
+                                  {app.theme.tertiary && (
+                                    <span
+                                      className="size-2 rounded-full border border-background shadow-xs"
+                                      style={{ backgroundColor: app.theme.tertiary }}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </div>
                             <span className="font-mono text-[10px] text-muted-foreground">
                               ID: {app._id}
                             </span>

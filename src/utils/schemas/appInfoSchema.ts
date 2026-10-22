@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+export interface AppTheme {
+  primary: string
+  secondary?: string
+  tertiary?: string
+}
+
 export interface AppLogo {
   id: string
   link: string
@@ -14,6 +20,7 @@ export interface AppInfo {
   appName: string
   backendBaseUrl: string
   logo?: AppLogo | null
+  theme?: AppTheme | null
   status: "active" | "deleted" | string
   createdBy?: string
   updatedBy?: string
@@ -78,6 +85,30 @@ export const appLogoSchema = z
     { message: "App logo is required" }
   )
 
+export const hexColorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+
+export const appThemeSchema = z
+  .object({
+    primary: z
+      .string()
+      .trim()
+      .regex(hexColorRegex, "Primary must be a valid HEX color (e.g. #059669)"),
+    secondary: z
+      .string()
+      .trim()
+      .regex(hexColorRegex, "Secondary must be a valid HEX color")
+      .optional()
+      .nullable(),
+    tertiary: z
+      .string()
+      .trim()
+      .regex(hexColorRegex, "Tertiary must be a valid HEX color")
+      .optional()
+      .nullable(),
+  })
+  .optional()
+  .nullable()
+
 /**
  * Validation schema for registering a new application (POST /api/v1/app-info/add).
  */
@@ -96,6 +127,7 @@ export const addAppSchema = z.object({
       "Backend base URL must be a valid URI with http or https"
     ),
   logo: appLogoSchema,
+  theme: appThemeSchema,
 })
 
 /**
@@ -117,6 +149,7 @@ export const updateAppSchema = z.object({
     )
     .optional(),
   logo: appLogoSchema,
+  theme: appThemeSchema,
 })
 
 export type AddAppInputs = z.infer<typeof addAppSchema>

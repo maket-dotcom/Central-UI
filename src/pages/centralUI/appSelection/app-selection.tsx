@@ -16,6 +16,7 @@ import { useGetApps } from "@/query/useAppInfo"
 import { useAppStore } from "@/store"
 import type { SelectedApp } from "@/store/slices/AppSlice"
 import { appData } from "@/app/appData"
+import { resetAppTheme } from "@/utils/themeApplier"
 import { Settings, Plus, LogOut, Globe } from "lucide-react"
 
 /**
@@ -35,6 +36,7 @@ export default function AppSelectionPage() {
     queryClient.removeQueries({
       predicate: (query) => query.queryKey[0] !== "apps",
     })
+    resetAppTheme()
   }, [queryClient])
 
   const { data, isLoading, isError, error } = useGetApps()
@@ -150,12 +152,32 @@ export default function AppSelectionPage() {
                   </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex items-center justify-between">
                 <Badge
                   variant={app.status === "active" ? "default" : "secondary"}
                 >
                   {app.status}
                 </Badge>
+                {app.theme?.primary && (
+                  <div className="flex items-center gap-1" title="App Theme Colors">
+                    <span
+                      className="size-3 rounded-full border border-background shadow-xs"
+                      style={{ backgroundColor: app.theme.primary }}
+                    />
+                    {app.theme.secondary && (
+                      <span
+                        className="size-2.5 rounded-full border border-background shadow-xs"
+                        style={{ backgroundColor: app.theme.secondary }}
+                      />
+                    )}
+                    {app.theme.tertiary && (
+                      <span
+                        className="size-2 rounded-full border border-background shadow-xs"
+                        style={{ backgroundColor: app.theme.tertiary }}
+                      />
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

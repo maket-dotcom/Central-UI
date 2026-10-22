@@ -1,4 +1,5 @@
 import type { StateCreator } from "zustand"
+import type { AppTheme } from "@/utils/schemas/appInfoSchema"
 
 /**
  * Shape of the selected app returned by Central-Backend (/api/v1/app-info/get).
@@ -13,6 +14,7 @@ export interface SelectedApp {
     link: string
     type?: string
   } | null
+  theme?: AppTheme | null
 }
 
 /**
