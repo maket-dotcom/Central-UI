@@ -49,19 +49,19 @@ export function NavUser({ user }: NavUserProps) {
               <SidebarMenuButton
                 {...triggerProps}
                 size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer [&[data-state=open]_.nav-user-muted]:text-sidebar-accent-foreground/75 [&[data-state=open]_.nav-user-avatar]:bg-sidebar-accent-foreground/15 [&[data-state=open]_.nav-user-avatar]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   {user.avatar ? (
                     <AvatarImage src={user.avatar} alt={user.name} />
                   ) : null}
-                  <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold">
+                  <AvatarFallback className="nav-user-avatar rounded-lg bg-sidebar-foreground/15 text-sidebar-foreground group-hover/menu-button:bg-sidebar-accent-foreground/15 group-hover/menu-button:text-sidebar-accent-foreground transition-colors font-semibold">
                     <ShieldUser className="size-4" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="nav-user-muted truncate text-xs text-sidebar-foreground/75 group-hover/menu-button:text-sidebar-accent-foreground/75 transition-colors">
                     {user.email}
                   </span>
                 </div>

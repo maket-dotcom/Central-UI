@@ -94,3 +94,49 @@ export const deleteApp = async ({
   const { data } = await api.del("deleteApp", undefined, { id })
   return data
 }
+
+import type { MediaResponse } from "@/configurations/types"
+
+/**
+ * Upload a media asset (e.g. app logo) to Central-Backend.
+ * Endpoint: POST /api/v1/media/upload
+ */
+export const uploadCentralMedia = async (payload: {
+  image: File
+  name?: string
+  type?: string
+  parentId?: string
+}): Promise<MediaResponse> => {
+  const formData = new FormData()
+  if (payload.name) {
+    formData.append("name", payload.name)
+  } else if (payload.image?.name) {
+    formData.append("name", payload.image.name)
+  }
+  formData.append("type", payload.type || "logo")
+  if (payload.parentId) formData.append("parentId", payload.parentId)
+  formData.append("file", payload.image)
+
+  const response = await api.post("uploadMedia", formData, {
+    "Content-Type": "multipart/form-data",
+  })
+
+  const raw = response.data
+  // Handle nested response from Central-Backend executor
+  const innerData = raw?.data?.data || raw?.data || raw
+
+  return {
+    message: raw?.data?.message || raw?.message || "Media uploaded successfully",
+    data: {
+      _id: innerData?._id || innerData?.id,
+      id: innerData?._id || innerData?.id,
+      url: innerData?.url || innerData?.link,
+      link: innerData?.url || innerData?.link,
+      name: innerData?.name,
+      type: innerData?.type,
+      fileType: innerData?.fileType,
+      size: innerData?.size,
+    },
+  } as MediaResponse
+}
+

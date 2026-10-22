@@ -4,6 +4,7 @@ import { useAppStore } from "@/store"
 import { useGetApps } from "@/query/useAppInfo"
 import { Loader2 } from "lucide-react"
 import type { SelectedApp } from "@/store/slices/AppSlice"
+import { applyAppTheme, resetAppTheme } from "@/utils/themeApplier"
 
 interface AppGuardProps {
   children: React.ReactNode
@@ -35,6 +36,21 @@ export default function AppGuard({ children }: AppGuardProps) {
   )
 
   // Synchronize the URL's app into Zustand and sessionStorage
+  useEffect(() => {
+    if (targetApp?.theme?.primary) {
+      applyAppTheme(targetApp.theme)
+    } else if (targetApp) {
+      applyAppTheme({
+        primary: "#059669",
+      })
+    } else {
+      resetAppTheme()
+    }
+    return () => {
+      resetAppTheme()
+    }
+  }, [targetApp?.theme?.primary])
+
   useEffect(() => {
     if (
       targetApp &&

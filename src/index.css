@@ -130,9 +130,7 @@
   }
   html {
     @apply font-sans;
-    scrollbar-gutter: stable;
   }
-
   /* Sleek, theme-adaptive custom scrollbar */
   * {
     scrollbar-width: thin;

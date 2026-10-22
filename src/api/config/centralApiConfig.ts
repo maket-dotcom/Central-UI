@@ -18,4 +18,7 @@ export const centralApiConfig: ApiEndpoint[] = [
     path: "/api/v1/app-info/delete/{id}",
     hasPathParams: true,
   },
+  { name: "uploadMedia", path: "/api/v1/media/upload" },
+  { name: "getOrphans", path: "/api/v1/media/orphans" },
+  { name: "cleanupOrphans", path: "/api/v1/media/cleanup-orphans" },
 ]

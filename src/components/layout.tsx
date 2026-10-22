@@ -9,11 +9,11 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
  */
 export default function Layout() {
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background">
+    <div className="flex h-screen w-full overflow-hidden bg-sidebar">
       <SidebarProvider>
         {/* Dynamic application sidebar */}
         <AppSidebar variant="inset" />
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+        <SidebarInset className="flex flex-col flex-1 min-w-0 overflow-hidden">
           {/* Top navigation header */}
           <SiteHeader />
           {/* Main scrollable page outlet */}

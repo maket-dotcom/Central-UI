@@ -48,17 +48,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              size="lg"
+              className="cursor-pointer"
               render={
-                <Link to="/apps" className="flex items-center gap-2">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <LayoutGrid className="size-4" />
+                <Link to="/apps" className="flex items-center gap-2.5">
+                  <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sidebar-foreground/15 text-sidebar-foreground group-hover/menu-button:bg-sidebar-accent-foreground/15 group-hover/menu-button:text-sidebar-accent-foreground transition-colors">
+                    {selectedApp?.logo?.link ? (
+                      <img
+                        src={selectedApp.logo.link}
+                        alt={selectedApp.appName}
+                        className="size-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none"
+                        }}
+                      />
+                    ) : (
+                      <LayoutGrid className="size-4" />
+                    )}
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold text-sm">
                       {appData.appName}
                     </span>
                     {selectedApp?.appName && (
-                      <span className="text-xs text-muted-foreground capitalize">
+                      <span className="text-xs text-sidebar-foreground/75 group-hover/menu-button:text-sidebar-accent-foreground/75 transition-colors">
                         {selectedApp.appName}
                       </span>
                     )}
