@@ -113,4 +113,10 @@ export const keyboardApiConfig: ApiEndpoint[] = [
     path: "/api/v1/admin/features/{key}",
     hasPathParams: true,
   },
+
+  // Device App Inventory endpoints
+  {
+    name: "getDeviceAppInventorySummary",
+    path: "/api/v1/admin/device-app-inventory/summary",
+  },
 ]

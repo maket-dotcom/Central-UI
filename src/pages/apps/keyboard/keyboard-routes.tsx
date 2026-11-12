@@ -4,6 +4,7 @@ import FeatureConfig from "./features/feature-config"
 import RemoteConfigConfig from "./remoteConfig/remote-config-config"
 import ReleaseConfig from "./releases/release-config"
 import TesterConfig from "./testers/tester-config"
+import InventoryConfig from "./inventory/inventory-config"
 
 /**
  * Feature module routes specific to the Keyboard workspace (including Home dashboard).
@@ -16,6 +17,7 @@ export const keyboardRoutes = [
   RemoteConfigConfig,
   ReleaseConfig,
   TesterConfig,
+  InventoryConfig,
 ]
 
 export default keyboardRoutes

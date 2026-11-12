@@ -6,7 +6,7 @@ import { keyboardSidebarConfig } from "./apps/keyboard"
  */
 export const backendFrontendMap = new Map<string, string>([
   ["ikeyboard", "keyboard"],
-  ["ikeyboard-DEV", "keyboard"],
+  ["ikeyboard-dev", "keyboard"],
 ])
 
 /**

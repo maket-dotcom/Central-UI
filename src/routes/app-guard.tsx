@@ -35,21 +35,24 @@ export default function AppGuard({ children }: AppGuardProps) {
     (a: SelectedApp) => a.appName.toLowerCase() === cleanRouteName
   )
 
-  // Synchronize the URL's app into Zustand and sessionStorage
+  const effectiveApp =
+    targetApp ||
+    (selectedApp && selectedApp.appName.toLowerCase() === cleanRouteName
+      ? selectedApp
+      : null)
+
+  // Synchronize the URL's app theme
   useEffect(() => {
-    if (targetApp?.theme?.primary) {
-      applyAppTheme(targetApp.theme)
-    } else if (targetApp) {
-      applyAppTheme({
-        primary: "#059669",
-      })
-    } else {
+    if (effectiveApp) {
+      applyAppTheme(
+        effectiveApp.theme?.primary
+          ? effectiveApp.theme
+          : { primary: "#059669" }
+      )
+    } else if (!isLoading) {
       resetAppTheme()
     }
-    return () => {
-      resetAppTheme()
-    }
-  }, [targetApp?.theme?.primary])
+  }, [effectiveApp, isLoading])
 
   useEffect(() => {
     if (

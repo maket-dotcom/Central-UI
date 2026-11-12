@@ -5,6 +5,7 @@ import {
   IconAdjustments,
   IconRocket,
   IconDeviceMobileCheck,
+  IconApps,
 } from "@tabler/icons-react"
 import type { AppSidebarConfig } from "../types"
 
@@ -18,6 +19,11 @@ export const keyboardSidebarConfig: AppSidebarConfig = {
       title: "Home",
       url: "/keyboard/home",
       icon: IconHome,
+    },
+    {
+      title: "Client App Inventory",
+      url: "/keyboard/inventory",
+      icon: IconApps,
     },
     {
       title: "Campaign",
